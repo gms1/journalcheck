@@ -10,16 +10,20 @@ format: short
 # Cursor file for tracking position (optional, default: /var/lib/journalcheck/cursor)
 # cursor_file: /var/lib/journalcheck/cursor
 
+# Optional: pipe output to a command
+# output_command: "notify-send 'Journal Alert'"
+
+# Optional: send output via email
+# email_to: "admin@example.com"
+# email_subject: "Journal Alerts"
+
 # Per-identifier priority filters
 identifiers:
   kernel:
     priority: warning
-    # Ignore patterns (regex, implicit ^ at start and $ at end)
+    # Ignore patterns (regex, fullmatch - must match entire message)
     ignore:
       # - ".*some pattern.*"
-    # Violation patterns (always shown)
+    # Violation patterns (always shown, search - can match anywhere)
     violations:
-      # - ".*Out of memory.*"
-    # Attack patterns (always shown, highest priority)
-    attacks:
-      # - ".*segfault.*"
+      # - "Out of memory"
