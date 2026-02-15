@@ -357,7 +357,7 @@ def test_ignore_pattern_fullmatch():
     entry = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "connection accepted"}
     show, severity = should_show_entry(entry, config)
     assert show is False
-    
+
     # Should not match if pattern doesn't cover entire message
     entry2 = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "prefix connection accepted suffix"}
     show2, severity2 = should_show_entry(entry2, config)
@@ -371,7 +371,7 @@ def test_violation_pattern_search():
     show, severity = should_show_entry(entry, config)
     assert show is True
     assert severity == "VIOLATION"
-    
+
     # Should match even if pattern is in the middle
     entry2 = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "prefix failed suffix"}
     show2, severity2 = should_show_entry(entry2, config)
@@ -379,12 +379,11 @@ def test_violation_pattern_search():
     assert severity2 == "VIOLATION"
 
 
-
 def test_load_config_merge_appends_lists():
     # Test that merging configs appends ignore and violations lists
     import tempfile
     import os
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create main config
         main_config = Path(tmpdir) / "main.yaml"
@@ -398,11 +397,11 @@ def test_load_config_merge_appends_lists():
                     }
                 }
             }, f)
-        
+
         # Create config dir with additional config
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
-        
+
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
             yaml.dump({
@@ -413,18 +412,18 @@ def test_load_config_merge_appends_lists():
                     }
                 }
             }, f)
-        
+
         # Mock the default paths
         from journalcheck import journalcheck
         original_default_file = journalcheck.DEFAULT_CONFIG_FILE
         original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
-        
+
         try:
             journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
             journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
-            
+
             config = load_config()
-            
+
             # Verify lists were appended
             assert isinstance(config.identifiers["ssh"], IdentifierConfig)
             assert config.identifiers["ssh"].ignore == ["pattern1", "pattern2"]
@@ -433,7 +432,6 @@ def test_load_config_merge_appends_lists():
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
             journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
-
 
 
 def test_default_violations_sshd():
@@ -460,3 +458,173 @@ def test_default_violations_with_custom():
     assert "custom pattern" in violations
     assert any("Failed password" in v for v in violations)
     assert len(violations) > 1  # Has both default and custom
+
+
+def test_load_config_merge_no_identifiers_in_main():
+    # Test merging when main config has no identifiers section
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"priority": 6}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert isinstance(config.identifiers["ssh"], IdentifierConfig)
+            assert config.identifiers["ssh"].priority == 4
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_merge_overrides():
+    # Test that config.d can override priority, format, cursor_file
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump(
+                {"priority": 6, "format": "short", "cursor_file": "/tmp/cursor1"}, f
+            )
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump(
+                {"priority": 4, "format": "json", "cursor_file": "/tmp/cursor2"}, f
+            )
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert config.priority == 4
+            assert config.format == "json"
+            assert config.cursor_file == "/tmp/cursor2"
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_merge_overrides_no_identifiers():
+    # Test config.d overrides when no identifiers in additional config
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"priority": 6}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"priority": 4, "format": "json", "cursor_file": "/tmp/test"}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert config.priority == 4
+            assert config.format == "json"
+            assert config.cursor_file == "/tmp/test"
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_merge_non_dict_identifier():
+    # Test merging when existing identifier is not a dict (e.g., int priority)
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": 4}}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": {"priority": 6}}}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert isinstance(config.identifiers["ssh"], IdentifierConfig)
+            assert config.identifiers["ssh"].priority == 6
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_merge_dict_to_int_identifier():
+    # Test merging when existing is dict but new is int
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": 6}}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert config.identifiers["ssh"] == 6
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
