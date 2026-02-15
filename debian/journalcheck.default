@@ -1,0 +1,3 @@
+# Timer schedule for journalcheck
+# See systemd.time(7) for syntax
+ONCALENDAR=hourly

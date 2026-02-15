@@ -1,0 +1,7 @@
+[Unit]
+Description=Journal check service
+Documentation=https://github.com/gms1/journalcheck
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/journalcheck

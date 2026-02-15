@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.amazonq/
+htmlcov/
+.coverage
+pkg/
+.pybuild/
+debian/.debhelper/
+debian/journalcheck/
+debian/*.debhelper
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars

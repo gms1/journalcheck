@@ -1,0 +1,13 @@
+Source: journalcheck
+Section: python
+Priority: optional
+Maintainer: Your Name <your.email@example.com>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, pybuild-plugin-pyproject, python3-build
+Standards-Version: 4.6.0
+
+Package: journalcheck
+Architecture: all
+Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd, python3-yaml
+Description: Journal check utility
+ A Python package for checking systemd journal entries with configurable
+ priority filtering and pattern matching.

@@ -1,0 +1,8 @@
+systemd-python
+PyYAML
+types-PyYAML
+pytest
+pytest-cov
+flake8
+black
+mypy

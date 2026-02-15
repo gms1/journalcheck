@@ -1,0 +1,10 @@
+[Unit]
+Description=Journal check timer
+Documentation=https://github.com/gms1/journalcheck
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+
+[Install]
+WantedBy=timers.target
