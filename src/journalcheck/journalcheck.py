@@ -208,7 +208,7 @@ def main() -> None:
             subprocess.run(
                 config.output_command, shell=True, input=output_text, text=True
             )
-        
+
         if config.email_to:
             # Send via email
             import subprocess
@@ -218,11 +218,13 @@ def main() -> None:
                 input=output_text,
                 text=True,
             )
-        
+
         if not config.output_command and not config.email_to:
             # Print to stdout (only if not running as systemd service)
-            # When running as systemd service, stdout goes to journal which could create a loop
+            # When running as systemd service, stdout goes to journal
+            # which could create a loop
             import sys
+
             if sys.stdout.isatty() or not Path("/run/systemd/system").exists():
                 print(output_text)
 
