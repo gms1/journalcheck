@@ -24,3 +24,7 @@ jobs:
       run: ./scripts/lint.sh
     - name: Test
       run: ./scripts/test.sh
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}

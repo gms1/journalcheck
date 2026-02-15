@@ -14,3 +14,4 @@ debian/*.debhelper
 debian/debhelper-build-stamp
 debian/files
 debian/*.substvars
+coverage.xml
