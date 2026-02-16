@@ -5,6 +5,8 @@ from pathlib import Path
 import argparse
 import json
 import re
+import os
+import subprocess
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -242,36 +244,28 @@ def main() -> None:
         if show:
             output_lines.append(format_entry(entry, config.format, severity))
 
+    if not output_lines:
+        return
+
     # Handle output
-    if output_lines:
-        output_text = "\n".join(output_lines)
+    output_text = "\n".join(output_lines)
 
-        if config.output_command:
-            # Pipe to command
-            import subprocess
+    if config.output_command:
+        subprocess.run(config.output_command, shell=True, input=output_text, text=True)
 
-            subprocess.run(
-                config.output_command, shell=True, input=output_text, text=True
-            )
+    if config.email_to:
+        subprocess.run(
+            ["mail", "-s", config.email_subject, config.email_to],
+            input=output_text,
+            text=True,
+        )
 
-        if config.email_to:
-            # Send via email
-            import subprocess
-
-            subprocess.run(
-                ["mail", "-s", config.email_subject, config.email_to],
-                input=output_text,
-                text=True,
-            )
-
-        if not config.output_command and not config.email_to:
-            import os
-
-            if not os.getenv("JOURNALCHECK_SERVICE"):
-                print(output_text)
+    if not config.output_command and not config.email_to:
+        if not os.getenv("JOURNALCHECK_SERVICE"):
+            print(output_text)
 
     # Save cursor
-    if cursor_file and output_lines and not args.test:
+    if cursor_file and not args.test:
         last_cursor: Any = entry.get(JournalFields.CURSOR)
         if last_cursor:
             cursor_file.parent.mkdir(parents=True, exist_ok=True)
