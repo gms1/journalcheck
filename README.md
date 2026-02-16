@@ -98,19 +98,19 @@ https://github.com/gms1/journalcheck
 journalcheck
 ```
 
-### Pipe to notification system
+### Filter output
 ```bash
-journalcheck | while read line; do notify-send "Journal Alert" "$line"; done
+journalcheck | grep ssh
 ```
 
-### Pipe to email
+### Save to file
+```bash
+journalcheck > /var/log/journal-alerts.log
+```
+
+### Send via email
 ```bash
 journalcheck | mail -s "Journal Alerts" admin@example.com
-```
-
-### Pipe to monitoring system
-```bash
-journalcheck -o json | your-monitoring-tool
 ```
 
 ### Run via systemd timer
