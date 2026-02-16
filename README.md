@@ -115,3 +115,28 @@ journalcheck -o json | your-monitoring-tool
 
 ### Run via systemd timer
 The package includes systemd service and timer units for automated checking.
+
+**Enable the timer:**
+```bash
+sudo systemctl enable --now journalcheck.timer
+```
+
+**Check timer status:**
+```bash
+sudo systemctl status journalcheck.timer
+sudo systemctl list-timers journalcheck.timer
+```
+
+**Customize the schedule:**
+The default schedule is hourly. To change it:
+```bash
+sudo systemctl edit journalcheck.timer
+```
+
+Add your custom schedule:
+```ini
+[Timer]
+OnCalendar=daily
+```
+
+See `systemd.time(7)` for schedule syntax.

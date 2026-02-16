@@ -3,7 +3,8 @@ set -e
 
 # Get workspace root
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-PKG_DIR="${WORKSPACE_ROOT}/pkg"
+VERSION=$(grep '^__version__ = ' "${WORKSPACE_ROOT}/src/journalcheck/__init__.py" | sed 's/__version__ = "\(.*\)"/\1/')
+PKG_DIR="${WORKSPACE_ROOT}/journalcheck-${VERSION}"
 DIST_DIR="${WORKSPACE_ROOT}/dist"
 
 # Recreate dist folder
@@ -11,7 +12,15 @@ rm -rf "${DIST_DIR}"
 mkdir -p "${DIST_DIR}"
 
 # Copy source to pkg directory
-rsync -a --exclude=pkg --exclude=dist --exclude=.git --exclude=__pycache__ --exclude='*.pyc' --exclude=.pybuild --exclude=htmlcov "${WORKSPACE_ROOT}/" "${PKG_DIR}/"
+rm -rf "${PKG_DIR}"
+mkdir -p "${PKG_DIR}"
+cp -a "${WORKSPACE_ROOT}/src" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/debian" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/systemd" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/pyproject.toml" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/README.md" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/LICENSE" "${PKG_DIR}/"
+cp -a "${WORKSPACE_ROOT}/config.yaml.sample" "${PKG_DIR}/"
 
 # Disable pyenv to use system Python
 export PATH=$(echo $PATH | tr ':' '\n' | grep -v pyenv | tr '\n' ':')

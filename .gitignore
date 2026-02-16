@@ -7,6 +7,7 @@ build/
 htmlcov/
 .coverage
 pkg/
+journalcheck-*/
 .pybuild/
 debian/.debhelper/
 debian/journalcheck/

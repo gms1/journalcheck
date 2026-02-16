@@ -1,7 +1,7 @@
 Source: journalcheck
-Section: python
+Section: admin
 Priority: optional
-Maintainer: Your Name <your.email@example.com>
+Maintainer: Guenter Sandner <www.gms@gmx.at>
 Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools, pybuild-plugin-pyproject, python3-build
 Standards-Version: 4.6.0
 
