@@ -628,3 +628,25 @@ def test_load_config_merge_dict_to_int_identifier():
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
             journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_config_unknown_key():
+    with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
+        Config.from_dict({"priority": 6, "unknown_key": "value"})
+
+
+def test_identifier_config_unknown_key():
+    with pytest.raises(ValueError, match="Unknown keys in identifier config: unknown_key"):
+        IdentifierConfig.from_dict({"priority": 6, "unknown_key": "value"})
+
+
+def test_load_config_unknown_key():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump({"priority": 6, "unknown_key": "value"}, f)
+        config_file = f.name
+
+    try:
+        with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
+            load_config(config_file)
+    finally:
+        Path(config_file).unlink()

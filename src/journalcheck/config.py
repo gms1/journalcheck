@@ -17,6 +17,23 @@ DEFAULT_CONFIG_FILE: str = "/etc/journalcheck.yaml"
 DEFAULT_CONFIG_DIR = "/etc/journalcheck.d"
 DEFAULT_CURSOR_FILE = "/var/lib/journalcheck/cursor"
 
+
+class IdentifierConfigKeys:
+    PRIORITY = "priority"
+    IGNORE = "ignore"
+    VIOLATIONS = "violations"
+
+
+class ConfigKeys:
+    PRIORITY = "priority"
+    FORMAT = "format"
+    CURSOR_FILE = "cursor_file"
+    OUTPUT_COMMAND = "output_command"
+    EMAIL_TO = "email_to"
+    EMAIL_SUBJECT = "email_subject"
+    IDENTIFIERS = "identifiers"
+
+
 DEFAULT_VIOLATIONS: dict[str, list[str]] = {
     "sshd": [
         "Failed password",
@@ -30,18 +47,17 @@ DEFAULT_VIOLATIONS: dict[str, list[str]] = {
         "incorrect password attempt",
     ],
     "su": [
-        "FAILED su",
-        "authentication failure",
+        "FAILED SU",
+        "authentication failed",
     ],
     "smartd": [
         "SMART Failure",
-        "Attribute.*failed",
-        "Error.*occurred",
+        "reached.*limit",
+        "Currently unreadable.*sectors",
+        "Offline uncorrectable sectors",
     ],
     "kernel": [
         "I/O error",
-        "Buffer I/O error",
-        "end_request: I/O error",
     ],
 }
 
@@ -71,18 +87,29 @@ class IdentifierConfig:
     def from_dict(
         cls, data: dict[str, Any], identifier: str = ""
     ) -> "IdentifierConfig":
-        priority = data.get("priority", 6)
+        valid_keys = {
+            IdentifierConfigKeys.PRIORITY,
+            IdentifierConfigKeys.IGNORE,
+            IdentifierConfigKeys.VIOLATIONS,
+        }
+        unknown_keys = set(data.keys()) - valid_keys
+        if unknown_keys:
+            raise ValueError(
+                f"Unknown keys in identifier config: {', '.join(sorted(unknown_keys))}"
+            )
+
+        priority = data.get(IdentifierConfigKeys.PRIORITY, 6)
         if isinstance(priority, str):
             priority = PRIORITY_NAMES.get(priority.lower(), 6)
 
         # Start with default violations for this identifier
         violations = list(DEFAULT_VIOLATIONS.get(identifier, []))
         # Append user-configured violations
-        violations.extend(data.get("violations", []))
+        violations.extend(data.get(IdentifierConfigKeys.VIOLATIONS, []))
 
         return cls(
             priority=priority,
-            ignore=data.get("ignore", []),
+            ignore=data.get(IdentifierConfigKeys.IGNORE, []),
             violations=violations,
         )
 
@@ -146,12 +173,27 @@ class Config:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Config":
-        priority = data.get("priority", 6)
+        valid_keys = {
+            ConfigKeys.PRIORITY,
+            ConfigKeys.FORMAT,
+            ConfigKeys.CURSOR_FILE,
+            ConfigKeys.OUTPUT_COMMAND,
+            ConfigKeys.EMAIL_TO,
+            ConfigKeys.EMAIL_SUBJECT,
+            ConfigKeys.IDENTIFIERS,
+        }
+        unknown_keys = set(data.keys()) - valid_keys
+        if unknown_keys:
+            raise ValueError(
+                f"Unknown keys in config: {', '.join(sorted(unknown_keys))}"
+            )
+
+        priority = data.get(ConfigKeys.PRIORITY, 6)
         if isinstance(priority, str):
             priority = PRIORITY_NAMES.get(priority.lower(), 6)
 
         identifiers: dict[str, IdentifierConfig | int] = {}
-        for ident, ident_config in data.get("identifiers", {}).items():
+        for ident, ident_config in data.get(ConfigKeys.IDENTIFIERS, {}).items():
             if isinstance(ident_config, dict):
                 identifiers[ident] = IdentifierConfig.from_dict(
                     ident_config, identifier=ident
@@ -164,10 +206,10 @@ class Config:
 
         return cls(
             priority=priority,
-            format=data.get("format", "short"),
-            cursor_file=data.get("cursor_file"),
-            output_command=data.get("output_command"),
-            email_to=data.get("email_to"),
-            email_subject=data.get("email_subject", "Journal Alerts"),
+            format=data.get(ConfigKeys.FORMAT, "short"),
+            cursor_file=data.get(ConfigKeys.CURSOR_FILE),
+            output_command=data.get(ConfigKeys.OUTPUT_COMMAND),
+            email_to=data.get(ConfigKeys.EMAIL_TO),
+            email_subject=data.get(ConfigKeys.EMAIL_SUBJECT, "Journal Alerts"),
             identifiers=identifiers,
         )

@@ -13,7 +13,21 @@ from .config import (
     DEFAULT_CONFIG_DIR,
     DEFAULT_CURSOR_FILE,
     Config,
+    ConfigKeys,
+    IdentifierConfigKeys,
 )
+
+
+class JournalFields:
+    SYSLOG_IDENTIFIER = "SYSLOG_IDENTIFIER"
+    COMM = "_COMM"
+    PID = "_PID"
+    PRIORITY = "PRIORITY"
+    MESSAGE = "MESSAGE"
+    REALTIME_TIMESTAMP = "__REALTIME_TIMESTAMP"
+    HOSTNAME = "_HOSTNAME"
+    CURSOR = "__CURSOR"
+    SEVERITY = "SEVERITY"
 
 
 def load_config(
@@ -42,59 +56,63 @@ def load_config(
         for yaml_file in sorted(config_dir.glob("*.yaml")):
             with open(yaml_file) as f:
                 loaded = yaml.safe_load(f) or {}
-                if "identifiers" in loaded:
-                    if "identifiers" not in data:
-                        data["identifiers"] = {}
-                    for ident, ident_config in loaded["identifiers"].items():
-                        if ident in data["identifiers"]:
+                if ConfigKeys.IDENTIFIERS in loaded:
+                    if ConfigKeys.IDENTIFIERS not in data:
+                        data[ConfigKeys.IDENTIFIERS] = {}
+                    for ident, ident_config in loaded[ConfigKeys.IDENTIFIERS].items():
+                        if ident in data[ConfigKeys.IDENTIFIERS]:
                             # Merge: append ignore and violations lists
-                            existing = data["identifiers"][ident]
+                            existing = data[ConfigKeys.IDENTIFIERS][ident]
                             if isinstance(existing, dict) and isinstance(
                                 ident_config, dict
                             ):
-                                if "ignore" in ident_config:
-                                    existing.setdefault("ignore", []).extend(
-                                        ident_config["ignore"]
+                                if IdentifierConfigKeys.IGNORE in ident_config:
+                                    existing.setdefault(
+                                        IdentifierConfigKeys.IGNORE, []
+                                    ).extend(ident_config[IdentifierConfigKeys.IGNORE])
+                                if IdentifierConfigKeys.VIOLATIONS in ident_config:
+                                    existing.setdefault(
+                                        IdentifierConfigKeys.VIOLATIONS, []
+                                    ).extend(
+                                        ident_config[IdentifierConfigKeys.VIOLATIONS]
                                     )
-                                if "violations" in ident_config:
-                                    existing.setdefault("violations", []).extend(
-                                        ident_config["violations"]
+                                if IdentifierConfigKeys.PRIORITY in ident_config:
+                                    existing[IdentifierConfigKeys.PRIORITY] = (
+                                        ident_config[IdentifierConfigKeys.PRIORITY]
                                     )
-                                if "priority" in ident_config:
-                                    existing["priority"] = ident_config["priority"]
                             else:
-                                data["identifiers"][ident] = ident_config
+                                data[ConfigKeys.IDENTIFIERS][ident] = ident_config
                         else:
-                            data["identifiers"][ident] = ident_config
-                if "priority" in loaded:
-                    data["priority"] = loaded["priority"]
-                if "format" in loaded:
-                    data["format"] = loaded["format"]
-                if "cursor_file" in loaded:
-                    data["cursor_file"] = loaded["cursor_file"]
+                            data[ConfigKeys.IDENTIFIERS][ident] = ident_config
+                if ConfigKeys.PRIORITY in loaded:
+                    data[ConfigKeys.PRIORITY] = loaded[ConfigKeys.PRIORITY]
+                if ConfigKeys.FORMAT in loaded:
+                    data[ConfigKeys.FORMAT] = loaded[ConfigKeys.FORMAT]
+                if ConfigKeys.CURSOR_FILE in loaded:
+                    data[ConfigKeys.CURSOR_FILE] = loaded[ConfigKeys.CURSOR_FILE]
 
     if priority_param is not None:
-        data["priority"] = priority_param
+        data[ConfigKeys.PRIORITY] = priority_param
 
     if output_format_param is not None:
-        data["format"] = output_format_param
+        data[ConfigKeys.FORMAT] = output_format_param
 
-    if use_default_cursor and "cursor_file" not in data:
-        data["cursor_file"] = DEFAULT_CURSOR_FILE
+    if use_default_cursor and ConfigKeys.CURSOR_FILE not in data:
+        data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
 
     return Config.from_dict(data)
 
 
 def get_identifier(entry: dict[str, Any]) -> str:
-    syslog_id: Optional[str] = entry.get("SYSLOG_IDENTIFIER")
-    comm: Optional[str] = entry.get("_COMM")
+    syslog_id: Optional[str] = entry.get(JournalFields.SYSLOG_IDENTIFIER)
+    comm: Optional[str] = entry.get(JournalFields.COMM)
     return syslog_id if syslog_id else comm if comm else ""
 
 
 def format_identifier_with_pid(entry: dict[str, Any]) -> str:
-    syslog_id: Optional[str] = entry.get("SYSLOG_IDENTIFIER")
-    comm: Optional[str] = entry.get("_COMM")
-    pid: Any = entry.get("_PID")
+    syslog_id: Optional[str] = entry.get(JournalFields.SYSLOG_IDENTIFIER)
+    comm: Optional[str] = entry.get(JournalFields.COMM)
+    pid: Any = entry.get(JournalFields.PID)
 
     if syslog_id:
         ident: str = syslog_id
@@ -112,8 +130,8 @@ def format_identifier_with_pid(entry: dict[str, Any]) -> str:
 
 def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]:
     ident: str = get_identifier(entry)
-    priority: int = entry.get("PRIORITY", 6)
-    message: str = entry.get("MESSAGE", "")
+    priority: int = entry.get(JournalFields.PRIORITY, 6)
+    message: str = entry.get(JournalFields.MESSAGE, "")
 
     # Get effective config for this identifier
     effective_priority, violations, ignore = config.get_config_for_identifier(ident)
@@ -139,17 +157,17 @@ def format_entry(entry: dict[str, Any], format_type: str, severity: str = "") ->
     if format_type == "json":
         result: dict[str, Any] = dict(entry)
         if severity:
-            result["SEVERITY"] = severity
+            result[JournalFields.SEVERITY] = severity
         return json.dumps(result, default=str)
     else:
-        timestamp: Any = entry.get("__REALTIME_TIMESTAMP", datetime.now())
+        timestamp: Any = entry.get(JournalFields.REALTIME_TIMESTAMP, datetime.now())
         if isinstance(timestamp, datetime):
             ts_str: str = timestamp.strftime("%b %d %H:%M:%S")
         else:
             ts_str = str(timestamp)
-        hostname: str = entry.get("_HOSTNAME", "")
+        hostname: str = entry.get(JournalFields.HOSTNAME, "")
         ident: str = format_identifier_with_pid(entry)
-        message: str = entry.get("MESSAGE", "")
+        message: str = entry.get(JournalFields.MESSAGE, "")
         severity_marker: str = f" [{severity}]" if severity else ""
         return f"{ts_str} {hostname} {ident}{severity_marker}: {message}"
 
@@ -230,7 +248,7 @@ def main() -> None:
 
     # Save cursor
     if cursor_file and output_lines:
-        last_cursor: Any = entry.get("__CURSOR")
+        last_cursor: Any = entry.get(JournalFields.CURSOR)
         if last_cursor:
             cursor_file.parent.mkdir(parents=True, exist_ok=True)
             with open(cursor_file, "w") as f:
