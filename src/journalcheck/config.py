@@ -164,7 +164,11 @@ class Config:
         if ident and ident in self.identifiers:
             ident_config = self.identifiers[ident]
             return (
-                ident_config.priority if ident_config.priority is not None else self.priority,
+                (
+                    ident_config.priority
+                    if ident_config.priority is not None
+                    else self.priority
+                ),
                 ident_config.violations,
                 ident_config.ignore,
             )
@@ -176,7 +180,11 @@ class Config:
                     regex = pattern[1:-1]
                     if re.match(regex, ident):
                         return (
-                            pattern_config.priority if pattern_config.priority is not None else self.priority,
+                            (
+                                pattern_config.priority
+                                if pattern_config.priority is not None
+                                else self.priority
+                            ),
                             pattern_config.violations,
                             pattern_config.ignore,
                         )
@@ -213,7 +221,8 @@ class Config:
                 )
             else:
                 raise ValueError(
-                    f"Identifier '{ident}' must be a dict, got {type(ident_config).__name__}"
+                    f"Identifier '{ident}' must be a dict, "
+                    f"got {type(ident_config).__name__}"
                 )
 
         return cls(
