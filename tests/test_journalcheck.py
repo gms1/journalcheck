@@ -650,3 +650,13 @@ def test_load_config_unknown_key():
             load_config(config_file)
     finally:
         Path(config_file).unlink()
+
+
+def test_parse_args_with_test_option():
+    args = parse_args(["-t"])
+    assert args.test is True
+
+
+def test_parse_args_without_test_option():
+    args = parse_args([])
+    assert args.test is False

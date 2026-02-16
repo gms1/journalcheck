@@ -179,6 +179,9 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "-o", "--output", choices=["short", "json"], help="Output format"
     )
+    parser.add_argument(
+        "-t", "--test", action="store_true", help="Test mode: do not update cursor file"
+    )
     return parser.parse_args(args)
 
 
@@ -247,7 +250,7 @@ def main() -> None:
                 print(output_text)
 
     # Save cursor
-    if cursor_file and output_lines:
+    if cursor_file and output_lines and not args.test:
         last_cursor: Any = entry.get(JournalFields.CURSOR)
         if last_cursor:
             cursor_file.parent.mkdir(parents=True, exist_ok=True)
