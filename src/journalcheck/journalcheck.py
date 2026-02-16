@@ -30,6 +30,40 @@ class JournalFields:
     SEVERITY = "SEVERITY"
 
 
+def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
+    if ConfigKeys.PRIORITY in loaded:
+        data[ConfigKeys.PRIORITY] = loaded[ConfigKeys.PRIORITY]
+    if ConfigKeys.FORMAT in loaded:
+        data[ConfigKeys.FORMAT] = loaded[ConfigKeys.FORMAT]
+    if ConfigKeys.CURSOR_FILE in loaded:
+        data[ConfigKeys.CURSOR_FILE] = loaded[ConfigKeys.CURSOR_FILE]
+    if ConfigKeys.IDENTIFIERS in loaded:
+        if ConfigKeys.IDENTIFIERS not in data:
+            data[ConfigKeys.IDENTIFIERS] = {}
+        for ident, ident_config in loaded[ConfigKeys.IDENTIFIERS].items():
+            if ident in data[ConfigKeys.IDENTIFIERS]:
+                # Merge: append ignore and violations lists
+                existing = data[ConfigKeys.IDENTIFIERS][ident]
+                if isinstance(existing, dict) and isinstance(ident_config, dict):
+                    if IdentifierConfigKeys.IGNORE in ident_config:
+                        existing.setdefault(IdentifierConfigKeys.IGNORE, []).extend(
+                            ident_config[IdentifierConfigKeys.IGNORE]
+                        )
+                    if IdentifierConfigKeys.VIOLATIONS in ident_config:
+                        existing.setdefault(IdentifierConfigKeys.VIOLATIONS, []).extend(
+                            ident_config[IdentifierConfigKeys.VIOLATIONS]
+                        )
+                    if IdentifierConfigKeys.PRIORITY in ident_config:
+                        existing[IdentifierConfigKeys.PRIORITY] = ident_config[
+                            IdentifierConfigKeys.PRIORITY
+                        ]
+                else:
+                    data[ConfigKeys.IDENTIFIERS][ident] = ident_config
+            else:
+                data[ConfigKeys.IDENTIFIERS][ident] = ident_config
+    return data
+
+
 def load_config(
     config_file_param: Optional[str] = None,
     priority_param: Optional[int] = None,
@@ -37,14 +71,14 @@ def load_config(
 ) -> Config:
     config_file = Path(DEFAULT_CONFIG_FILE)
     config_dir: Path | None = Path(DEFAULT_CONFIG_DIR)
-    use_default_cursor = True
+
+    data: dict[str, Any] = {}
 
     if config_file_param:
         config_file = Path(config_file_param)
         config_dir = None
-        use_default_cursor = False
-
-    data: dict[str, Any] = {}
+    else:
+        data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
 
     # Load main config file
     if config_file.exists():
@@ -56,49 +90,13 @@ def load_config(
         for yaml_file in sorted(config_dir.glob("*.yaml")):
             with open(yaml_file) as f:
                 loaded = yaml.safe_load(f) or {}
-                if ConfigKeys.IDENTIFIERS in loaded:
-                    if ConfigKeys.IDENTIFIERS not in data:
-                        data[ConfigKeys.IDENTIFIERS] = {}
-                    for ident, ident_config in loaded[ConfigKeys.IDENTIFIERS].items():
-                        if ident in data[ConfigKeys.IDENTIFIERS]:
-                            # Merge: append ignore and violations lists
-                            existing = data[ConfigKeys.IDENTIFIERS][ident]
-                            if isinstance(existing, dict) and isinstance(
-                                ident_config, dict
-                            ):
-                                if IdentifierConfigKeys.IGNORE in ident_config:
-                                    existing.setdefault(
-                                        IdentifierConfigKeys.IGNORE, []
-                                    ).extend(ident_config[IdentifierConfigKeys.IGNORE])
-                                if IdentifierConfigKeys.VIOLATIONS in ident_config:
-                                    existing.setdefault(
-                                        IdentifierConfigKeys.VIOLATIONS, []
-                                    ).extend(
-                                        ident_config[IdentifierConfigKeys.VIOLATIONS]
-                                    )
-                                if IdentifierConfigKeys.PRIORITY in ident_config:
-                                    existing[IdentifierConfigKeys.PRIORITY] = (
-                                        ident_config[IdentifierConfigKeys.PRIORITY]
-                                    )
-                            else:
-                                data[ConfigKeys.IDENTIFIERS][ident] = ident_config
-                        else:
-                            data[ConfigKeys.IDENTIFIERS][ident] = ident_config
-                if ConfigKeys.PRIORITY in loaded:
-                    data[ConfigKeys.PRIORITY] = loaded[ConfigKeys.PRIORITY]
-                if ConfigKeys.FORMAT in loaded:
-                    data[ConfigKeys.FORMAT] = loaded[ConfigKeys.FORMAT]
-                if ConfigKeys.CURSOR_FILE in loaded:
-                    data[ConfigKeys.CURSOR_FILE] = loaded[ConfigKeys.CURSOR_FILE]
+                data = _merge_configs(data, loaded)
 
     if priority_param is not None:
         data[ConfigKeys.PRIORITY] = priority_param
 
     if output_format_param is not None:
         data[ConfigKeys.FORMAT] = output_format_param
-
-    if use_default_cursor and ConfigKeys.CURSOR_FILE not in data:
-        data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
 
     return Config.from_dict(data)
 
