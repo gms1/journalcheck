@@ -58,12 +58,12 @@ def test_load_config_priority_names():
 
 def test_load_config_identifier_int_normalization():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"identifiers": {"kernel": "warning"}}, f)
+        yaml.dump({"identifiers": {"kernel": {"priority": "warning"}}}, f)
         config_file = f.name
 
     try:
         config = load_config(config_file)
-        assert config.identifiers["kernel"] == 4
+        assert config.identifiers["kernel"].priority == 4
     finally:
         Path(config_file).unlink()
 
@@ -126,6 +126,16 @@ def test_load_config_unknown_key():
             load_config(config_file)
     finally:
         Path(config_file).unlink()
+
+
+def test_load_config_file_not_found():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        config_file = f.name
+    Path(config_file).unlink()
+    with pytest.raises(
+        FileNotFoundError, match=f"Config file not found: {config_file}"
+    ):
+        load_config(config_file)
 
 
 def test_load_config_merge_appends_lists():
@@ -281,28 +291,17 @@ def test_load_config_merge_non_dict_identifier():
         with open(main_config, "w") as f:
             yaml.dump({"identifiers": {"ssh": 4}}, f)
 
-        config_dir = Path(tmpdir) / "config.d"
-        config_dir.mkdir()
-
-        additional_config = config_dir / "01-additional.yaml"
-        with open(additional_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": {"priority": 6}}}, f)
-
         from journalcheck import journalcheck
 
         original_default_file = journalcheck.DEFAULT_CONFIG_FILE
-        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
 
         try:
             journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
-            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
 
-            config = load_config()
-            assert isinstance(config.identifiers["ssh"], IdentifierConfig)
-            assert config.identifiers["ssh"].priority == 6
+            with pytest.raises(ValueError, match="Identifier 'ssh' must be a dict"):
+                load_config()
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
-            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
 
 
 def test_load_config_merge_dict_to_int_identifier():
@@ -327,8 +326,66 @@ def test_load_config_merge_dict_to_int_identifier():
             journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
             journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
 
+            with pytest.raises(ValueError, match="Identifier 'ssh' must be a dict"):
+                load_config()
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_unknown_key_in_config_dir():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"priority": 6}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"priority": 4, "unknown_key": "value"}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
+                load_config()
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_merge_priority_override():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        additional_config = config_dir / "01-additional.yaml"
+        with open(additional_config, "w") as f:
+            yaml.dump({"identifiers": {"ssh": {"priority": 6}}}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
             config = load_config()
-            assert config.identifiers["ssh"] == 6
+            assert config.identifiers["ssh"].priority == 6
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
             journalcheck.DEFAULT_CONFIG_DIR = original_default_dir

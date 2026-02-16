@@ -22,9 +22,14 @@ def test_identifier_config_invalid_regex():
         IdentifierConfig(ignore=["[invalid"])
 
 
-def test_identifier_config_invalid_type():
+def test_identifier_config_invalid_ignore():
     with pytest.raises(ValueError, match="ignore must be a list"):
         IdentifierConfig(ignore={"key": "value"})
+
+
+def test_identifier_config_invalid_violations():
+    with pytest.raises(ValueError, match="violations must be a list"):
+        IdentifierConfig(violations={"key": "value"})
 
 
 def test_config_invalid_priority():
@@ -38,13 +43,13 @@ def test_config_invalid_format():
 
 
 def test_config_invalid_identifier_priority():
-    with pytest.raises(ValueError, match="Priority for 'test' must be 0-7"):
-        Config(identifiers={"test": 10})
+    with pytest.raises(ValueError, match="Priority must be 0-7"):
+        Config(identifiers={"test": IdentifierConfig(priority=10)})
 
 
 def test_config_invalid_regex_identifier():
     with pytest.raises(ValueError, match="Invalid regex identifier"):
-        Config(identifiers={"/[invalid/": 4})
+        Config(identifiers={"/[invalid/": IdentifierConfig(priority=4)})
 
 
 def test_identifier_config_from_dict():
@@ -61,7 +66,7 @@ def test_config_from_dict():
         "format": "json",
         "identifiers": {
             "ssh": {"priority": 6, "violations": ["BREAK-IN"]},
-            "kernel": 3,
+            "kernel": {"priority": 3},
         },
     }
     config = Config.from_dict(data)
@@ -69,7 +74,8 @@ def test_config_from_dict():
     assert config.format == "json"
     assert isinstance(config.identifiers["ssh"], IdentifierConfig)
     assert config.identifiers["ssh"].priority == 6
-    assert config.identifiers["kernel"] == 3
+    assert isinstance(config.identifiers["kernel"], IdentifierConfig)
+    assert config.identifiers["kernel"].priority == 3
 
 
 def test_config_unknown_key():
@@ -104,12 +110,18 @@ def test_config_to_dict():
         priority=3,
         format="json",
         cursor_file="/tmp/cursor",
+        output_command="echo test",
+        email_to="admin@example.com",
+        email_subject="Test Alert",
         identifiers={"ssh": IdentifierConfig(priority=6, violations=["Failed"])},
     )
     result = config.to_dict()
     assert result["priority"] == "err"
     assert result["format"] == "json"
     assert result["cursor_file"] == "/tmp/cursor"
+    assert result["output_command"] == "echo test"
+    assert result["email_to"] == "admin@example.com"
+    assert result["email_subject"] == "Test Alert"
     assert result["identifiers"]["ssh"]["priority"] == "info"
     assert result["identifiers"]["ssh"]["violations"] == ["Failed"]
 

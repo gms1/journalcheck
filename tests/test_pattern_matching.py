@@ -25,7 +25,7 @@ def test_should_show_entry_identifier_dict():
 
 
 def test_should_show_entry_identifier_int():
-    config = Config(priority=6, identifiers={"kernel": 4})
+    config = Config(priority=6, identifiers={"kernel": IdentifierConfig(priority=4)})
     entry = {"SYSLOG_IDENTIFIER": "kernel", "PRIORITY": 3}
     show, severity = should_show_entry(entry, config)
     assert show is True
@@ -50,7 +50,7 @@ def test_should_show_entry_regex_no_match():
 
 
 def test_should_show_entry_regex_int():
-    config = Config(priority=6, identifiers={"/^systemd.*/": 3})
+    config = Config(priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=3)})
     entry = {"SYSLOG_IDENTIFIER": "systemd-udevd", "PRIORITY": 3}
     show, severity = should_show_entry(entry, config)
     assert show is True

@@ -1,0 +1,2 @@
+var/lib/journalcheck
+etc/journalcheck.d

@@ -141,16 +141,14 @@ class Config:
     output_command: str | None = None
     email_to: str | None = None
     email_subject: str = "Journal Alerts"
-    identifiers: dict[str, IdentifierConfig | int] = field(default_factory=dict)
+    identifiers: dict[str, IdentifierConfig] = field(default_factory=dict)
 
     def __post_init__(self):
         if not 0 <= self.priority <= 7:
             raise ValueError(f"Priority must be 0-7, got {self.priority}")
         if self.format not in ["short", "json"]:
             raise ValueError(f"Format must be 'short' or 'json', got '{self.format}'")
-        for ident, config in self.identifiers.items():
-            if isinstance(config, int) and not 0 <= config <= 7:
-                raise ValueError(f"Priority for '{ident}' must be 0-7, got {config}")
+        for ident in self.identifiers:
             if ident.startswith("/") and ident.endswith("/"):
                 try:
                     re.compile(ident[1:-1])
@@ -165,13 +163,11 @@ class Config:
         # Check exact match first
         if ident and ident in self.identifiers:
             ident_config = self.identifiers[ident]
-            if isinstance(ident_config, IdentifierConfig):
-                return (
-                    ident_config.priority if ident_config.priority is not None else self.priority,
-                    ident_config.violations,
-                    ident_config.ignore,
-                )
-            return ident_config, [], []
+            return (
+                ident_config.priority if ident_config.priority is not None else self.priority,
+                ident_config.violations,
+                ident_config.ignore,
+            )
 
         # Check regex patterns
         if ident:
@@ -179,13 +175,11 @@ class Config:
                 if pattern.startswith("/") and pattern.endswith("/"):
                     regex = pattern[1:-1]
                     if re.match(regex, ident):
-                        if isinstance(pattern_config, IdentifierConfig):
-                            return (
-                                pattern_config.priority if pattern_config.priority is not None else self.priority,
-                                pattern_config.violations,
-                                pattern_config.ignore,
-                            )
-                        return pattern_config, [], []
+                        return (
+                            pattern_config.priority if pattern_config.priority is not None else self.priority,
+                            pattern_config.violations,
+                            pattern_config.ignore,
+                        )
 
         # Default
         return self.priority, [], []
@@ -211,17 +205,16 @@ class Config:
         if isinstance(priority, str):
             priority = PRIORITY_NAMES.get(priority.lower(), 6)
 
-        identifiers: dict[str, IdentifierConfig | int] = {}
+        identifiers: dict[str, IdentifierConfig] = {}
         for ident, ident_config in data.get(ConfigKeys.IDENTIFIERS, {}).items():
             if isinstance(ident_config, dict):
                 identifiers[ident] = IdentifierConfig.from_dict(
                     ident_config, identifier=ident
                 )
             else:
-                if isinstance(ident_config, str):
-                    identifiers[ident] = PRIORITY_NAMES.get(ident_config.lower(), 6)
-                else:
-                    identifiers[ident] = ident_config
+                raise ValueError(
+                    f"Identifier '{ident}' must be a dict, got {type(ident_config).__name__}"
+                )
 
         return cls(
             priority=priority,
@@ -251,10 +244,7 @@ class Config:
 
         # First add configured identifiers
         for ident, ident_config in self.identifiers.items():
-            if isinstance(ident_config, IdentifierConfig):
-                result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
-            else:
-                result[ConfigKeys.IDENTIFIERS][ident] = PRIORITY_NUMBERS[ident_config]
+            result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
 
         # Then add unconfigured identifiers that have default violations
         for ident in DEFAULT_VIOLATIONS:

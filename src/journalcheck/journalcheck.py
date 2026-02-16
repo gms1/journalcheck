@@ -30,7 +30,21 @@ class JournalFields:
     SEVERITY = "SEVERITY"
 
 
+class Severity:
+    VIOLATION = "VIOLATION"
+
+
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
+    valid_keys = {
+        ConfigKeys.PRIORITY,
+        ConfigKeys.FORMAT,
+        ConfigKeys.CURSOR_FILE,
+        ConfigKeys.IDENTIFIERS,
+    }
+    unknown_keys = set(loaded.keys()) - valid_keys
+    if unknown_keys:
+        raise ValueError(f"Unknown keys in config: {', '.join(sorted(unknown_keys))}")
+
     if ConfigKeys.PRIORITY in loaded:
         data[ConfigKeys.PRIORITY] = loaded[ConfigKeys.PRIORITY]
     if ConfigKeys.FORMAT in loaded:
@@ -82,17 +96,19 @@ def load_config(
     else:
         data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
 
+    config_files: list[Path] = []
+
     # Load main config file
     if config_file.exists():
-        with open(config_file) as f:
-            data = yaml.safe_load(f) or {}
+        config_files.append(config_file)
 
-    # Load additional configs from /etc/journalcheck.d/
     if config_dir and config_dir.exists() and config_dir.is_dir():
-        for yaml_file in sorted(config_dir.glob("*.yaml")):
-            with open(yaml_file) as f:
-                loaded = yaml.safe_load(f) or {}
-                data = _merge_configs(data, loaded)
+        config_files.extend(sorted(config_dir.glob("*.yaml")))
+
+    for yaml_file in config_files:
+        with open(yaml_file) as f:
+            loaded = yaml.safe_load(f) or {}
+            data = _merge_configs(data, loaded)
 
     if priority_param is not None:
         data[ConfigKeys.PRIORITY] = priority_param
@@ -116,14 +132,13 @@ def format_identifier_with_pid(entry: dict[str, Any]) -> str:
 
     if syslog_id:
         ident: str = syslog_id
-        if pid:
-            ident = f"{ident}[{pid}]"
     elif comm:
         ident = f"({comm})"
-        if pid:
-            ident = f"({comm})[{pid}]"
     else:
         ident = ""
+
+    if pid:
+        ident = f"{ident}[{pid}]"
 
     return ident
 
@@ -139,7 +154,7 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
     # Check violations first (always shown)
     for pattern in violations:
         if re.search(pattern, message, re.IGNORECASE):
-            return True, "VIOLATION"
+            return True, Severity.VIOLATION
 
     # Check priority
     if priority > effective_priority:
@@ -160,7 +175,9 @@ def format_entry(entry: dict[str, Any], format_type: str, severity: str = "") ->
             result[JournalFields.SEVERITY] = severity
         return json.dumps(result, default=str)
     else:
-        timestamp: Any = entry.get(JournalFields.REALTIME_TIMESTAMP, datetime.now())
+        timestamp: Any = entry.get(JournalFields.REALTIME_TIMESTAMP)
+        if timestamp is None:
+            timestamp = datetime.now()
         if isinstance(timestamp, datetime):
             ts_str: str = timestamp.strftime("%b %d %H:%M:%S")
         else:
