@@ -10,6 +10,7 @@ from journalcheck.journalcheck import (
     parse_args,
     get_identifier,
     format_identifier_with_pid,
+    JournalFields,
 )
 from journalcheck.config import Config, IdentifierConfig, PRIORITY_NAMES
 
@@ -116,14 +117,18 @@ def test_parse_args_with_options():
 
 
 def test_should_show_entry_regex_match():
-    config = Config(priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=4)})
+    config = Config(
+        priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=4)}
+    )
     entry = {"SYSLOG_IDENTIFIER": "systemd-logind", "PRIORITY": 5}
     show, severity = should_show_entry(entry, config)
     assert show is False
 
 
 def test_should_show_entry_regex_no_match():
-    config = Config(priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=4)})
+    config = Config(
+        priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=4)}
+    )
     entry = {"SYSLOG_IDENTIFIER": "kernel", "PRIORITY": 5}
     show, severity = should_show_entry(entry, config)
     assert show is True
@@ -137,7 +142,9 @@ def test_should_show_entry_regex_int():
 
 
 def test_should_show_entry_violation():
-    config = Config(priority=6, identifiers={"ssh": IdentifierConfig(violations=["Failed"])})
+    config = Config(
+        priority=6, identifiers={"ssh": IdentifierConfig(violations=["Failed"])}
+    )
     entry = {"SYSLOG_IDENTIFIER": "ssh", "PRIORITY": 6, "MESSAGE": "Failed password"}
     show, severity = should_show_entry(entry, config)
     assert show is True
@@ -145,7 +152,9 @@ def test_should_show_entry_violation():
 
 
 def test_should_show_entry_ignore():
-    config = Config(priority=6, identifiers={"ssh": IdentifierConfig(ignore=[".*Accepted.*"])})
+    config = Config(
+        priority=6, identifiers={"ssh": IdentifierConfig(ignore=[".*Accepted.*"])}
+    )
     entry = {"SYSLOG_IDENTIFIER": "ssh", "PRIORITY": 6, "MESSAGE": "Accepted publickey"}
     show, severity = should_show_entry(entry, config)
     assert show is False
@@ -217,7 +226,9 @@ def test_load_config_priority_names():
 
 
 def test_should_show_entry_regex_violation():
-    config = Config(priority=6, identifiers={"/^ssh.*/": IdentifierConfig(violations=["Failed"])})
+    config = Config(
+        priority=6, identifiers={"/^ssh.*/": IdentifierConfig(violations=["Failed"])}
+    )
     entry = {"SYSLOG_IDENTIFIER": "sshd", "PRIORITY": 6, "MESSAGE": "Failed password"}
     show, severity = should_show_entry(entry, config)
     assert show is True
@@ -225,8 +236,14 @@ def test_should_show_entry_regex_violation():
 
 
 def test_should_show_entry_regex_ignore():
-    config = Config(priority=6, identifiers={"/^ssh.*/": IdentifierConfig(ignore=[".*Accepted.*"])})
-    entry = {"SYSLOG_IDENTIFIER": "sshd", "PRIORITY": 6, "MESSAGE": "Accepted publickey"}
+    config = Config(
+        priority=6, identifiers={"/^ssh.*/": IdentifierConfig(ignore=[".*Accepted.*"])}
+    )
+    entry = {
+        "SYSLOG_IDENTIFIER": "sshd",
+        "PRIORITY": 6,
+        "MESSAGE": "Accepted publickey",
+    }
     show, severity = should_show_entry(entry, config)
     assert show is False
 
@@ -353,27 +370,48 @@ def test_load_config_custom_file_with_cursor():
 
 def test_ignore_pattern_fullmatch():
     # Ignore patterns should match the entire message (fullmatch)
-    config = Config(priority=6, identifiers={"test": IdentifierConfig(ignore=["connection accepted"])})
-    entry = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "connection accepted"}
+    config = Config(
+        priority=6,
+        identifiers={"test": IdentifierConfig(ignore=["connection accepted"])},
+    )
+    entry = {
+        "SYSLOG_IDENTIFIER": "test",
+        "PRIORITY": 6,
+        "MESSAGE": "connection accepted",
+    }
     show, severity = should_show_entry(entry, config)
     assert show is False
 
     # Should not match if pattern doesn't cover entire message
-    entry2 = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "prefix connection accepted suffix"}
+    entry2 = {
+        "SYSLOG_IDENTIFIER": "test",
+        "PRIORITY": 6,
+        "MESSAGE": "prefix connection accepted suffix",
+    }
     show2, severity2 = should_show_entry(entry2, config)
     assert show2 is True
 
 
 def test_violation_pattern_search():
     # Violation patterns should match anywhere in the message
-    config = Config(priority=6, identifiers={"test": IdentifierConfig(violations=["failed"])})
-    entry = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "authentication failed for user"}
+    config = Config(
+        priority=6, identifiers={"test": IdentifierConfig(violations=["failed"])}
+    )
+    entry = {
+        "SYSLOG_IDENTIFIER": "test",
+        "PRIORITY": 6,
+        "MESSAGE": "authentication failed for user",
+    }
     show, severity = should_show_entry(entry, config)
     assert show is True
     assert severity == "VIOLATION"
 
     # Should match even if pattern is in the middle
-    entry2 = {"SYSLOG_IDENTIFIER": "test", "PRIORITY": 6, "MESSAGE": "prefix failed suffix"}
+    entry2 = {
+        "SYSLOG_IDENTIFIER": "test",
+        "PRIORITY": 6,
+        "MESSAGE": "prefix failed suffix",
+    }
     show2, severity2 = should_show_entry(entry2, config)
     assert show2 is True
     assert severity2 == "VIOLATION"
@@ -388,15 +426,18 @@ def test_load_config_merge_appends_lists():
         # Create main config
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({
-                "identifiers": {
-                    "ssh": {
-                        "priority": 6,
-                        "ignore": ["pattern1"],
-                        "violations": ["violation1"]
+            yaml.dump(
+                {
+                    "identifiers": {
+                        "ssh": {
+                            "priority": 6,
+                            "ignore": ["pattern1"],
+                            "violations": ["violation1"],
+                        }
                     }
-                }
-            }, f)
+                },
+                f,
+            )
 
         # Create config dir with additional config
         config_dir = Path(tmpdir) / "config.d"
@@ -404,17 +445,18 @@ def test_load_config_merge_appends_lists():
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({
-                "identifiers": {
-                    "ssh": {
-                        "ignore": ["pattern2"],
-                        "violations": ["violation2"]
+            yaml.dump(
+                {
+                    "identifiers": {
+                        "ssh": {"ignore": ["pattern2"], "violations": ["violation2"]}
                     }
-                }
-            }, f)
+                },
+                f,
+            )
 
         # Mock the default paths
         from journalcheck import journalcheck
+
         original_default_file = journalcheck.DEFAULT_CONFIG_FILE
         original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
 
@@ -436,24 +478,16 @@ def test_load_config_merge_appends_lists():
 
 def test_default_violations_sshd():
     # sshd should have default violations pre-populated when loaded from config
-    config = Config.from_dict({
-        "identifiers": {
-            "sshd": {}
-        }
-    })
+    config = Config.from_dict({"identifiers": {"sshd": {}}})
     assert len(config.identifiers["sshd"].violations) > 0
     assert any("Failed password" in v for v in config.identifiers["sshd"].violations)
 
 
 def test_default_violations_with_custom():
     # Custom violations should be appended to defaults
-    config = Config.from_dict({
-        "identifiers": {
-            "sshd": {
-                "violations": ["custom pattern"]
-            }
-        }
-    })
+    config = Config.from_dict(
+        {"identifiers": {"sshd": {"violations": ["custom pattern"]}}}
+    )
     violations = config.identifiers["sshd"].violations
     assert "custom pattern" in violations
     assert any("Failed password" in v for v in violations)
@@ -636,7 +670,9 @@ def test_config_unknown_key():
 
 
 def test_identifier_config_unknown_key():
-    with pytest.raises(ValueError, match="Unknown keys in identifier config: unknown_key"):
+    with pytest.raises(
+        ValueError, match="Unknown keys in identifier config: unknown_key"
+    ):
         IdentifierConfig.from_dict({"priority": 6, "unknown_key": "value"})
 
 
@@ -660,3 +696,59 @@ def test_parse_args_with_test_option():
 def test_parse_args_without_test_option():
     args = parse_args([])
     assert args.test is False
+
+
+def test_parse_args_with_show_config():
+    args = parse_args(["--show-config"])
+    assert args.show_config is True
+
+
+def test_identifier_config_to_dict():
+    config = IdentifierConfig(priority=4, ignore=["test"], violations=["fail"])
+    result = config.to_dict()
+    assert result["priority"] == "warning"
+    assert result["ignore"] == ["test"]
+    assert result["violations"] == ["fail"]
+
+
+def test_config_to_dict():
+    config = Config(
+        priority=3,
+        format="json",
+        cursor_file="/tmp/cursor",
+        identifiers={"ssh": IdentifierConfig(priority=6, violations=["Failed"])},
+    )
+    result = config.to_dict()
+    assert result["priority"] == "err"
+    assert result["format"] == "json"
+    assert result["cursor_file"] == "/tmp/cursor"
+    assert result["identifiers"]["ssh"]["priority"] == "info"
+    assert result["identifiers"]["ssh"]["violations"] == ["Failed"]
+
+
+def test_violation_pattern_case_insensitive():
+    config = Config(
+        priority=6, identifiers={"test": IdentifierConfig(violations=["Failed"])}
+    )
+    entry = {
+        JournalFields.SYSLOG_IDENTIFIER: "test",
+        JournalFields.PRIORITY: 6,
+        JournalFields.MESSAGE: "FAILED password",
+    }
+    show, severity = should_show_entry(entry, config)
+    assert show is True
+    assert severity == "VIOLATION"
+
+
+def test_ignore_pattern_case_insensitive():
+    config = Config(
+        priority=6,
+        identifiers={"test": IdentifierConfig(ignore=["accepted publickey"])},
+    )
+    entry = {
+        JournalFields.SYSLOG_IDENTIFIER: "test",
+        JournalFields.PRIORITY: 6,
+        JournalFields.MESSAGE: "Accepted Publickey",
+    }
+    show, severity = should_show_entry(entry, config)
+    assert show is False

@@ -138,7 +138,7 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
 
     # Check violations first (always shown)
     for pattern in violations:
-        if re.search(pattern, message):
+        if re.search(pattern, message, re.IGNORECASE):
             return True, "VIOLATION"
 
     # Check priority
@@ -147,7 +147,7 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
 
     # Check ignore patterns last (with implicit anchors)
     for pattern in ignore:
-        if re.fullmatch(pattern, message):
+        if re.fullmatch(pattern, message, re.IGNORECASE):
             return False, ""
 
     return True, ""
@@ -182,6 +182,9 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument(
         "-t", "--test", action="store_true", help="Test mode: do not update cursor file"
     )
+    parser.add_argument(
+        "--show-config", action="store_true", help="Show merged configuration and exit"
+    )
     return parser.parse_args(args)
 
 
@@ -192,6 +195,10 @@ def main() -> None:
         priority_param=args.priority,
         output_format_param=args.output,
     )
+
+    if args.show_config:
+        print(yaml.dump(config.to_dict(), default_flow_style=False, sort_keys=False))
+        return
 
     j: journal.Reader = journal.Reader()
 

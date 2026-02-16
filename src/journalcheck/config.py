@@ -13,6 +13,17 @@ PRIORITY_NAMES: dict[str, int] = {
     "debug": 7,
 }
 
+PRIORITY_NUMBERS: dict[int, str] = {
+    0: "emerg",
+    1: "alert",
+    2: "crit",
+    3: "err",
+    4: "warning",
+    5: "notice",
+    6: "info",
+    7: "debug",
+}
+
 DEFAULT_CONFIG_FILE: str = "/etc/journalcheck.yaml"
 DEFAULT_CONFIG_DIR = "/etc/journalcheck.d"
 DEFAULT_CURSOR_FILE = "/var/lib/journalcheck/cursor"
@@ -112,6 +123,13 @@ class IdentifierConfig:
             ignore=data.get(IdentifierConfigKeys.IGNORE, []),
             violations=violations,
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            IdentifierConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
+            IdentifierConfigKeys.IGNORE: self.ignore,
+            IdentifierConfigKeys.VIOLATIONS: self.violations,
+        }
 
 
 @dataclass
@@ -213,3 +231,37 @@ class Config:
             email_subject=data.get(ConfigKeys.EMAIL_SUBJECT, "Journal Alerts"),
             identifiers=identifiers,
         )
+
+    def to_dict(self) -> dict[str, Any]:
+        result: dict[str, Any] = {
+            ConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
+            ConfigKeys.FORMAT: self.format,
+        }
+        if self.cursor_file:
+            result[ConfigKeys.CURSOR_FILE] = self.cursor_file
+        if self.output_command:
+            result[ConfigKeys.OUTPUT_COMMAND] = self.output_command
+        if self.email_to:
+            result[ConfigKeys.EMAIL_TO] = self.email_to
+            result[ConfigKeys.EMAIL_SUBJECT] = self.email_subject
+
+        # Add all identifiers with default violations
+        result[ConfigKeys.IDENTIFIERS] = {}
+
+        # First add configured identifiers
+        for ident, ident_config in self.identifiers.items():
+            if isinstance(ident_config, IdentifierConfig):
+                result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
+            else:
+                result[ConfigKeys.IDENTIFIERS][ident] = PRIORITY_NUMBERS[ident_config]
+
+        # Then add unconfigured identifiers that have default violations
+        for ident in DEFAULT_VIOLATIONS:
+            if ident not in result[ConfigKeys.IDENTIFIERS]:
+                result[ConfigKeys.IDENTIFIERS][ident] = {
+                    IdentifierConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
+                    IdentifierConfigKeys.IGNORE: [],
+                    IdentifierConfigKeys.VIOLATIONS: DEFAULT_VIOLATIONS[ident],
+                }
+
+        return result

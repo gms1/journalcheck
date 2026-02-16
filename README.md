@@ -22,6 +22,7 @@ Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designe
 - Priority-based filtering (emerg, alert, crit, err, warning, notice, info, debug)
 - Per-identifier priority configuration
 - Regex pattern matching for identifiers
+- Case-insensitive pattern matching (violations and ignore patterns)
 - Two-level pattern hierarchy:
   - **Violations**: Always shown (e.g., failed logins, security events)
   - **Ignore**: Suppress matching messages (exact match)
