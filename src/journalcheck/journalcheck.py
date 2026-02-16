@@ -76,6 +76,8 @@ def load_config(
 
     if config_file_param:
         config_file = Path(config_file_param)
+        if not config_file.exists():
+            raise FileNotFoundError(f"Config file not found: {config_file}")
         config_dir = None
     else:
         data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
