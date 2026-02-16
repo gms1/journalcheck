@@ -248,12 +248,9 @@ def main() -> None:
             )
 
         if not config.output_command and not config.email_to:
-            # Print to stdout (only if not running as systemd service)
-            # When running as systemd service, stdout goes to journal
-            # which could create a loop
-            import sys
+            import os
 
-            if sys.stdout.isatty() or not Path("/run/systemd/system").exists():
+            if not os.getenv("JOURNALCHECK_SERVICE"):
                 print(output_text)
 
     # Save cursor

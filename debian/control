@@ -9,5 +9,5 @@ Package: journalcheck
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd, python3-yaml
 Description: Journal check utility
- A Python package for checking systemd journal entries with configurable
+ A package for checking systemd journal entries with configurable
  priority filtering and pattern matching.

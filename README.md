@@ -5,7 +5,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gms1/journalcheck/pulls)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A Python package for checking systemd journal entries with configurable priority filtering, pattern matching, and security violation detection.
+A package for checking systemd journal entries with configurable priority filtering, pattern matching, and security violation detection.
 
 Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designed for systemd's journal with output that can be piped to other programs for notifications, monitoring, or alerting.
 
@@ -26,7 +26,7 @@ Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designe
 - Two-level pattern hierarchy:
   - **Violations**: Always shown (e.g., failed logins, security events)
   - **Ignore**: Suppress matching messages (exact match)
-- Pre-configured violation patterns for common services (sshd, sudo, su)
+- Pre-configured violation patterns for common services (sshd, sudo, su, smartd)
 - Cursor-based tracking (only process new entries)
 - Multiple output formats (short, json)
 - Modular configuration via `/etc/journalcheck.yaml` and `/etc/journalcheck.d/*.yaml`
@@ -66,8 +66,8 @@ identifiers:
 
 **Output Options:**
 - If `output_command` is set, output will be piped to that command
-- If `email_to` is set (and no `output_command`), output will be sent via email using the `mail` command
-- If neither is set, output goes to stdout (default)
+- If `email_to` is set, output will be sent via email using the `mail` command
+- If neither is set, output goes to stdout by (default), except if running as systemd service
 
 ## Default Violations
 
