@@ -91,6 +91,13 @@ def test_identifier_config_to_dict():
     assert result["ignore"] == ["test"]
     assert result["violations"] == ["fail"]
 
+    # Test with no priority set (should not include priority in output)
+    config_no_priority = IdentifierConfig(ignore=["test"], violations=["fail"])
+    result_no_priority = config_no_priority.to_dict()
+    assert "priority" not in result_no_priority
+    assert result_no_priority["ignore"] == ["test"]
+    assert result_no_priority["violations"] == ["fail"]
+
 
 def test_config_to_dict():
     config = Config(

@@ -75,12 +75,12 @@ DEFAULT_VIOLATIONS: dict[str, list[str]] = {
 
 @dataclass
 class IdentifierConfig:
-    priority: int = 6
+    priority: int | None = None
     ignore: list[str] = field(default_factory=list)
     violations: list[str] = field(default_factory=list)
 
     def __post_init__(self):
-        if not 0 <= self.priority <= 7:
+        if self.priority is not None and not 0 <= self.priority <= 7:
             raise ValueError(f"Priority must be 0-7, got {self.priority}")
         if not isinstance(self.ignore, list):
             raise ValueError(f"ignore must be a list, got {type(self.ignore).__name__}")
@@ -109,9 +109,9 @@ class IdentifierConfig:
                 f"Unknown keys in identifier config: {', '.join(sorted(unknown_keys))}"
             )
 
-        priority = data.get(IdentifierConfigKeys.PRIORITY, 6)
-        if isinstance(priority, str):
-            priority = PRIORITY_NAMES.get(priority.lower(), 6)
+        priority = data.get(IdentifierConfigKeys.PRIORITY)
+        if priority is not None and isinstance(priority, str):
+            priority = PRIORITY_NAMES.get(priority.lower())
 
         # Start with default violations for this identifier
         violations = list(DEFAULT_VIOLATIONS.get(identifier, []))
@@ -125,11 +125,12 @@ class IdentifierConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
-        return {
-            IdentifierConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
-            IdentifierConfigKeys.IGNORE: self.ignore,
-            IdentifierConfigKeys.VIOLATIONS: self.violations,
-        }
+        result: dict[str, Any] = {}
+        if self.priority is not None:
+            result[IdentifierConfigKeys.PRIORITY] = PRIORITY_NUMBERS[self.priority]
+        result[IdentifierConfigKeys.IGNORE] = self.ignore
+        result[IdentifierConfigKeys.VIOLATIONS] = self.violations
+        return result
 
 
 @dataclass
@@ -166,7 +167,7 @@ class Config:
             ident_config = self.identifiers[ident]
             if isinstance(ident_config, IdentifierConfig):
                 return (
-                    ident_config.priority,
+                    ident_config.priority if ident_config.priority is not None else self.priority,
                     ident_config.violations,
                     ident_config.ignore,
                 )
@@ -180,7 +181,7 @@ class Config:
                     if re.match(regex, ident):
                         if isinstance(pattern_config, IdentifierConfig):
                             return (
-                                pattern_config.priority,
+                                pattern_config.priority if pattern_config.priority is not None else self.priority,
                                 pattern_config.violations,
                                 pattern_config.ignore,
                             )
@@ -259,7 +260,6 @@ class Config:
         for ident in DEFAULT_VIOLATIONS:
             if ident not in result[ConfigKeys.IDENTIFIERS]:
                 result[ConfigKeys.IDENTIFIERS][ident] = {
-                    IdentifierConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
                     IdentifierConfigKeys.IGNORE: [],
                     IdentifierConfigKeys.VIOLATIONS: DEFAULT_VIOLATIONS[ident],
                 }
