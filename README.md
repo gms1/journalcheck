@@ -33,6 +33,22 @@ Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designe
 
 ## Installation
 
+### From PyPI
+
+```bash
+pip install journalcheck
+```
+
+### From Debian package
+
+Download the `.deb` file from the [releases page](https://github.com/gms1/journalcheck/releases) and install:
+
+```bash
+sudo dpkg -i journalcheck_*.deb
+```
+
+### From source
+
 ```bash
 pip install -e .
 ```
