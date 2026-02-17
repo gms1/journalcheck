@@ -21,8 +21,10 @@ Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designe
 
 - Priority-based filtering (emerg, alert, crit, err, warning, notice, info, debug)
 - Per-identifier priority configuration
-- Regex pattern matching for identifiers
-- Case-insensitive pattern matching (violations and ignore patterns)
+- Regex pattern matching for identifiers (case-sensitive; (?i) is supported)
+- Regex pattern matching for ignore and violations patterns (always case-insensitive)
+  - **Ignore patterns**: Must match the entire message (implicit anchors)
+  - **Violation patterns**: Can match anywhere in the message (substring match)
 - Two-level pattern hierarchy:
   - **Violations**: Always shown (e.g., failed logins, security events)
   - **Ignore**: Suppress matching messages (exact match)
@@ -72,12 +74,18 @@ email_to: "admin@example.com"
 email_subject: "Journal Alerts"
 
 identifiers:
-  ssh:
+  ssh: # Exact match
     priority: info
     ignore:
-      - ".*Accepted publickey.*"
+      - ".*session opened.*"   # Full match: must match entire message
+      - ".*session closed.*"
     violations:
-      - "Failed password"
+      - "Failed password"       # Substring: matches anywhere in message
+  /^(?i)cron$/: # Match both "cron" and "CRON" using case-insensitive regex
+    priority: notice
+    ignore:
+      - ".*session opened.*"
+      - ".*session closed.*"
 ```
 
 **Output Options:**

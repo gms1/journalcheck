@@ -46,16 +46,21 @@ class ConfigKeys:
 
 
 DEFAULT_VIOLATIONS: dict[str, list[str]] = {
+    "kernel": [
+        "I/O error",
+        "Out of memory",
+        "Killed process",
+    ],
     "sshd": [
-        "Failed password",
         "Invalid user",
+        "Failed password",
         "Connection closed by authenticating user",
-        "Disconnected from authenticating user",
     ],
     "sudo": [
         "authentication failure",
-        "user NOT in sudoers",
         "incorrect password attempt",
+        "unknown user",
+        "user NOT in sudoers",
     ],
     "su": [
         "FAILED SU",
@@ -66,9 +71,6 @@ DEFAULT_VIOLATIONS: dict[str, list[str]] = {
         "reached.*limit",
         "Currently unreadable.*sectors",
         "Offline uncorrectable sectors",
-    ],
-    "kernel": [
-        "I/O error",
     ],
 }
 
