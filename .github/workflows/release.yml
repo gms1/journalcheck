@@ -17,13 +17,10 @@ jobs:
         python-version: '3.12'
     - name: Build Python package
       run: |
-        pip install build
-        python -m build
+        ./scripts/build.sh
     - name: Build Debian package
       run: |
-        sudo apt-get update
-        sudo apt-get install -y debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build
-        ./scripts/release.sh
+        ./scripts/debian.sh
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:

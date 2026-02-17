@@ -7,6 +7,14 @@ VERSION=$(grep '^__version__ = ' "${WORKSPACE_ROOT}/src/journalcheck/__init__.py
 PKG_DIR="${WORKSPACE_ROOT}/journalcheck-${VERSION}"
 DIST_DIR="${WORKSPACE_ROOT}/dist"
 
+
+if ! dpkg -s debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build &> /dev/null; then
+
+  sudo apt-get update
+  sudo apt-get install -y debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build
+
+fi
+
 # Recreate dist folder
 rm -rf "${DIST_DIR}"
 mkdir -p "${DIST_DIR}"

@@ -4,13 +4,8 @@
 
 ### Prerequisites
 
-Install system dependencies:
-```bash
-sudo apt-get install libsystemd-dev libsqlite3-dev  # Debian/Ubuntu
-sudo dnf install systemd-devel sqlite-devel         # Fedora/RHEL
-```
-
-### Install Python and dependencies
+pyenv is not absolutely necessary, but it is recommended
+### Install System and Python and dependencies
 
 ```bash
 ./scripts/install.sh
@@ -18,8 +13,10 @@ sudo dnf install systemd-devel sqlite-devel         # Fedora/RHEL
 
 Or manually:
 ```bash
-pyenv install
-pyenv local
+sudo apt-get install libsystemd-dev libsqlite3-dev  # Debian/Ubuntu
+sudo dnf install systemd-devel sqlite-devel         # Fedora/RHEL
+pyenv install -s # when using pyenv
+pyenv local # when using pyenv
 pip install -e .
 pip install -r requirements.txt
 ```
@@ -37,6 +34,12 @@ pip install -r requirements.txt
 ```
 
 View HTML coverage report: `htmlcov/index.html`
+
+## Building Python Package
+
+```bash
+./scripts/build.sh
+```
 
 ## Building Debian Package
 
