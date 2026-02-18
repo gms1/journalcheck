@@ -50,7 +50,9 @@ def test_should_show_entry_regex_no_match():
 
 
 def test_should_show_entry_regex_int():
-    config = Config(priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=3)})
+    config = Config(
+        priority=6, identifiers={"/^systemd.*/": IdentifierConfig(priority=3)}
+    )
     entry = {"SYSLOG_IDENTIFIER": "systemd-udevd", "PRIORITY": 3}
     show, severity = should_show_entry(entry, config)
     assert show is True

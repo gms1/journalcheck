@@ -1,0 +1,22 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    purge)
+        # Remove journalcheck user and group on purge
+        if getent passwd journalcheck >/dev/null; then
+            deluser --quiet journalcheck || true
+        fi
+
+        if getent group journalcheck >/dev/null; then
+            delgroup --quiet journalcheck || true
+        fi
+
+        # Remove state directory on purge
+        rm -rf /var/lib/journalcheck
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0

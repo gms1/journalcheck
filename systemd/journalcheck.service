@@ -4,5 +4,7 @@ Documentation=https://github.com/gms1/journalcheck
 
 [Service]
 Type=oneshot
+User=journalcheck
+Group=journalcheck
 Environment=JOURNALCHECK_SERVICE=1
 ExecStart=/usr/bin/journalcheck

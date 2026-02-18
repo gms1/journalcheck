@@ -1,0 +1,31 @@
+#!/bin/sh
+set -e
+
+case "$1" in
+    configure)
+        # Create journalcheck system user and group
+        if ! getent group journalcheck >/dev/null; then
+            addgroup --system journalcheck
+        fi
+        
+        if ! getent passwd journalcheck >/dev/null; then
+            adduser --system --ingroup journalcheck --home /var/lib/journalcheck \
+                --no-create-home --gecos "journalcheck service" journalcheck
+        fi
+        
+        # Add journalcheck user to systemd-journal group to read journal
+        if getent group systemd-journal >/dev/null; then
+            adduser journalcheck systemd-journal
+        fi
+        
+        # Set ownership of state directory
+        if [ -d /var/lib/journalcheck ]; then
+            chown journalcheck:journalcheck /var/lib/journalcheck
+            chmod 750 /var/lib/journalcheck
+        fi
+        ;;
+esac
+
+#DEBHELPER#
+
+exit 0
