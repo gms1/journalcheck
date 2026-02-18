@@ -30,6 +30,54 @@ cp -a "${WORKSPACE_ROOT}/README.md" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/LICENSE" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/config.yaml.sample" "${PKG_DIR}/"
 
+# Generate debian/changelog from CHANGELOG.md
+if [ -f "${WORKSPACE_ROOT}/CHANGELOG.md" ]; then
+  python3 - "${WORKSPACE_ROOT}" "${PKG_DIR}" <<'EOF'
+import re
+import sys
+from datetime import datetime
+
+WORKSPACE_ROOT = sys.argv[1]
+PKG_DIR = sys.argv[2]
+
+with open(f"{WORKSPACE_ROOT}/CHANGELOG.md") as f:
+    content = f.read()
+
+# Extract version sections
+version_pattern = r'## \[(\d+\.\d+\.\d+)\] - (\d{4}-\d{2}-\d{2})\n\n(.*?)(?=\n## |\Z)'
+matches = re.findall(version_pattern, content, re.DOTALL)
+
+changelog_entries = []
+for version, date, changes in matches:
+    # Parse date
+    dt = datetime.strptime(date, "%Y-%m-%d")
+    deb_date = dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
+    
+    # Extract changes
+    change_lines = []
+    for line in changes.strip().split('\n'):
+        line = line.strip()
+        if line.startswith('###'):
+            continue
+        if line.startswith('- '):
+            change_lines.append(f"  * {line[2:]}")
+    
+    if not change_lines:
+        change_lines = ["  * Release"]
+    
+    entry = f"""journalcheck ({version}-1) unstable; urgency=low
+
+{chr(10).join(change_lines)}
+
+ -- Guenter Sandner <www.gms@gmx.at>  {deb_date}
+"""
+    changelog_entries.append(entry)
+
+with open(f"{PKG_DIR}/debian/changelog", "w") as f:
+    f.write("\n".join(changelog_entries))
+EOF
+fi
+
 # Disable pyenv to use system Python
 export PATH=$(echo $PATH | tr ':' '\n' | grep -v pyenv | tr '\n' ':')
 unset PYENV_ROOT

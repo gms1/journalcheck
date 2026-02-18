@@ -1,0 +1,32 @@
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
+
+## [Unreleased]
+
+## [0.1.0] - 2024-01-01
+
+### Added
+- Initial release
+- Priority-based filtering with systemd journal integration
+- Per-identifier priority configuration
+- Regex pattern matching for identifiers (case-sensitive with (?i) support)
+- Case-insensitive ignore and violation patterns
+- Pre-configured violation patterns for common services (sshd, sudo, su, smartd, kernel)
+- Cursor-based tracking to process only new entries
+- Multiple output formats (short, json)
+- Modular configuration via `/etc/journalcheck.yaml` and `/etc/journalcheck.d/*.yaml`
+- Systemd timer integration for automated checking
+- Output piping to commands or email
+- `--test` flag to run without updating cursor
+- `--show-config` flag to display merged configuration
+- PyPI package distribution
+- Debian package distribution
+- CI/CD with GitHub Actions
+- Test suite with 85% coverage
+
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/gms1/journalcheck/releases/tag/v0.1.0
