@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+import sys
+import traceback
 from systemd import journal
 import yaml
 from pathlib import Path
@@ -53,7 +55,12 @@ def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, An
         data[ConfigKeys.FORMAT] = loaded[ConfigKeys.FORMAT]
     if ConfigKeys.CURSOR_FILE in loaded:
         data[ConfigKeys.CURSOR_FILE] = loaded[ConfigKeys.CURSOR_FILE]
-    if ConfigKeys.IDENTIFIERS in loaded:
+    if loaded.get(ConfigKeys.IDENTIFIERS) is not None:
+        if not isinstance(loaded.get(ConfigKeys.IDENTIFIERS), dict):
+            raise ValueError(
+                f"{ConfigKeys.IDENTIFIERS} must be a dict, "
+                f"got {type(loaded.get(ConfigKeys.IDENTIFIERS)).__name__}"
+            )
         if ConfigKeys.IDENTIFIERS not in data:
             data[ConfigKeys.IDENTIFIERS] = {}
         for ident, ident_config in loaded[ConfigKeys.IDENTIFIERS].items():
@@ -272,7 +279,20 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
 
 def main() -> None:
-    run(journal.Reader())
+    try:
+        run(journal.Reader())
+    except yaml.YAMLError as e:
+        print(f"Error parsing the configuration: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    except (ValueError, FileNotFoundError) as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    except Exception:
+        print("Unexpected Error:", file=sys.stderr)
+        traceback.print_exc()
+        sys.exit(1)
 
 
 if __name__ == "__main__":

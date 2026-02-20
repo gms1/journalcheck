@@ -1,9 +1,9 @@
 import tempfile
+import pytest
 import yaml
 from pathlib import Path
-import pytest
 from journalcheck.journalcheck import load_config
-from journalcheck.config import Config, IdentifierConfig
+from journalcheck.config import Config, ConfigKeys, IdentifierConfig
 
 
 def test_load_config_default():
@@ -32,9 +32,28 @@ def test_load_config_with_args():
     assert config.format == "json"
 
 
-def test_load_config_with_identifiers():
+def test_load_config_with_empty_identifiers():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"identifiers": {"kernel": {"priority": 4}}}, f)
+        yaml.dump({"identifiers": None}, f)
+        config_file = f.name
+
+    try:
+        config = load_config(config_file)
+        assert config
+    finally:
+        Path(config_file).unlink()
+
+
+def test_load_config_with_identifiers_having_empty_ignore_and_violations():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump(
+            {
+                "identifiers": {
+                    "kernel": {"priority": 4, "ignore": None, "violations": None}
+                }
+            },
+            f,
+        )
         config_file = f.name
 
     try:
@@ -64,6 +83,24 @@ def test_load_config_identifier_int_normalization():
     try:
         config = load_config(config_file)
         assert config.identifiers["kernel"].priority == 4
+    finally:
+        Path(config_file).unlink()
+
+
+def test_load_config_raises_yaml_parse_error():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        f.write(
+            """
+                  priority:6
+                  nokey
+                  format: short
+                """
+        )
+        config_file = f.name
+
+    try:
+        with pytest.raises(yaml.YAMLError):
+            load_config(config_file)
     finally:
         Path(config_file).unlink()
 
@@ -123,6 +160,18 @@ def test_load_config_unknown_key():
 
     try:
         with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
+            load_config(config_file)
+    finally:
+        Path(config_file).unlink()
+
+
+def test_load_config_invalid_identifiers():
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
+        yaml.dump({ConfigKeys.IDENTIFIERS: ["foo"]}, f)
+        config_file = f.name
+
+    try:
+        with pytest.raises(ValueError, match="must be a dict, got list"):
             load_config(config_file)
     finally:
         Path(config_file).unlink()
