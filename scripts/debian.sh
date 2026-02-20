@@ -1,5 +1,7 @@
 #!/bin/bash
+DN=$(dirname -- "${BASH_SOURCE[0]}"})
 set -e
+cd "${DN}/.."
 
 # Get workspace root
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -52,7 +54,7 @@ for version, date, changes in matches:
     # Parse date
     dt = datetime.strptime(date, "%Y-%m-%d")
     deb_date = dt.strftime("%a, %d %b %Y %H:%M:%S +0000")
-    
+
     # Extract changes
     change_lines = []
     for line in changes.strip().split('\n'):
@@ -61,10 +63,10 @@ for version, date, changes in matches:
             continue
         if line.startswith('- '):
             change_lines.append(f"  * {line[2:]}")
-    
+
     if not change_lines:
         change_lines = ["  * Release"]
-    
+
     entry = f"""journalcheck ({version}-1) unstable; urgency=low
 
 {chr(10).join(change_lines)}

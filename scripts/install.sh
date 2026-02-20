@@ -1,5 +1,7 @@
 #!/bin/bash
+DN=$(dirname -- "${BASH_SOURCE[0]}"})
 set -e
+cd "${DN}/.."
 
 if command -v apt-get &> /dev/null; then
     dpkg -s libsystemd-dev libsqlite3-dev &> /dev/null || sudo apt-get install -y libsystemd-dev libsqlite3-dev

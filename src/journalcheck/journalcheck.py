@@ -207,19 +207,17 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
-def main() -> None:
-    args: argparse.Namespace = parse_args()
+def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
+    parsed_args: argparse.Namespace = parse_args(args)
     config: Config = load_config(
-        config_file_param=args.config,
-        priority_param=args.priority,
-        output_format_param=args.output,
+        config_file_param=parsed_args.config,
+        priority_param=parsed_args.priority,
+        output_format_param=parsed_args.output,
     )
 
-    if args.show_config:
+    if parsed_args.show_config:
         print(yaml.dump(config.to_dict(), default_flow_style=False, sort_keys=False))
         return
-
-    j: journal.Reader = journal.Reader()
 
     cursor_file: Path | None = Path(config.cursor_file) if config.cursor_file else None
     cursor_loaded: bool = False
@@ -228,18 +226,18 @@ def main() -> None:
         with open(cursor_file) as f:
             cursor: str = f.read().strip()
             if cursor:
-                j.seek_cursor(cursor)
-                j.get_next()
-                cursor_loaded = True
+                reader.seek_cursor(cursor)
+                reader.get_next()
+            cursor_loaded = True  # Mark as loaded even if empty (start from beginning)
 
-    if not cursor_loaded:
-        # Default to last 24 hours if no cursor
+    if not cursor_loaded and config.cursor_file:
+        # If cursor file is configured but doesn't exist, seek to last 24 hours
         since: datetime = datetime.now() - timedelta(days=1)
-        j.seek_realtime(since)  # type: ignore[attr-defined]
+        reader.seek_realtime(since)  # type: ignore[attr-defined]
 
     # Collect output
     output_lines: list[str] = []
-    for entry in j:
+    for entry in reader:
         show, severity = should_show_entry(entry, config)
         if show:
             output_lines.append(format_entry(entry, config.format, severity))
@@ -265,7 +263,7 @@ def main() -> None:
             print(output_text)
 
     # Save cursor
-    if cursor_file and not args.test:
+    if cursor_file and not parsed_args.test:
         last_cursor: Any = entry.get(JournalFields.CURSOR)
         if last_cursor:
             cursor_file.parent.mkdir(parents=True, exist_ok=True)
@@ -274,4 +272,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    run(journal.Reader())

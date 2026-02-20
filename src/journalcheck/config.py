@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Any, cast
 
 PRIORITY_NAMES: dict[str, int] = {
     "emerg": 0,
@@ -116,13 +116,20 @@ class IdentifierConfig:
             priority = PRIORITY_NAMES.get(priority.lower())
 
         # Start with default violations for this identifier
-        violations = list(DEFAULT_VIOLATIONS.get(identifier, []))
+        violations: list[str] = list(DEFAULT_VIOLATIONS.get(identifier, []))
         # Append user-configured violations
-        violations.extend(data.get(IdentifierConfigKeys.VIOLATIONS, []))
+        if data.get(IdentifierConfigKeys.VIOLATIONS):
+            violations.extend(
+                cast(list[str], data.get(IdentifierConfigKeys.VIOLATIONS))
+            )
+
+        ignore = data.get(IdentifierConfigKeys.IGNORE)
+        if not ignore:
+            ignore = []
 
         return cls(
             priority=priority,
-            ignore=data.get(IdentifierConfigKeys.IGNORE, []),
+            ignore=ignore,
             violations=violations,
         )
 
