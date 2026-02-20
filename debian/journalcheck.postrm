@@ -3,17 +3,12 @@ set -e
 
 case "$1" in
     purge)
-        # Remove journalcheck user and group on purge
-        if getent passwd journalcheck >/dev/null; then
-            deluser --quiet journalcheck || true
-        fi
-
-        if getent group journalcheck >/dev/null; then
-            delgroup --quiet journalcheck || true
-        fi
-
         # Remove state directory on purge
-        rm -rf /var/lib/journalcheck
+        if [ -d /var/lib/journalcheck ]; then
+            rm -rf /var/lib/journalcheck
+        fi
+        ;;
+    remove|upgrade|failed-upgrade|abort-install|abort-upgrade|disappear)
         ;;
 esac
 
