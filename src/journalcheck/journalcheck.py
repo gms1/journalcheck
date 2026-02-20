@@ -271,5 +271,9 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
                 f.write(str(last_cursor))
 
 
-if __name__ == "__main__":
+def main() -> None:
     run(journal.Reader())
+
+
+if __name__ == "__main__":
+    main()
