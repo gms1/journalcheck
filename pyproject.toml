@@ -16,7 +16,7 @@ license = {text = "MIT"}
 Repository = "https://github.com/gms1/journalcheck"
 
 [project.scripts]
-journalcheck = "journalcheck:main"
+journalcheck = "journalcheck.journalcheck:main"
 
 [tool.setuptools.dynamic]
 version = {attr = "journalcheck.__version__"}
