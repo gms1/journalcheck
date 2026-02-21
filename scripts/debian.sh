@@ -3,6 +3,8 @@ DN=$(dirname -- "${BASH_SOURCE[0]}"})
 set -e
 cd "${DN}/.."
 
+export PATH=$(echo "${PATH}" | sed -e 's|/opt/hostedtoolcache/[^:]*:||g')
+
 # Get workspace root
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION=$(grep '^__version__ = ' "${WORKSPACE_ROOT}/src/journalcheck/__init__.py" | sed 's/__version__ = "\(.*\)"/\1/')
