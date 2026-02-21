@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.1.0] - 2024-01-01
-
 ### Added
 - Initial release
 - Priority-based filtering with systemd journal integration
@@ -26,7 +24,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PyPI package distribution
 - Debian package distribution
 - CI/CD with GitHub Actions
-- Test suite with 85% coverage
-
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/gms1/journalcheck/releases/tag/v0.1.0
+- Test suite with 95% coverage
