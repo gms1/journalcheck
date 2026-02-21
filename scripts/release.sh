@@ -44,7 +44,7 @@ else
 fi
 
 echo "Committing and tagging ${NEW_VERSION_TAG}..."
-git add "${CHANGELOG}"
+git add "${CHANGELOG}" "${VERSION_FILE}"
 git commit -m "Prepare release ${NEW_VERSION_TAG}"
 git tag -a "${NEW_VERSION_TAG}" -m "Release ${NEW_VERSION_TAG}"
 

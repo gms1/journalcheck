@@ -13,6 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.4] - 2026-02-21
 
+## [0.0.4] - 2026-02-21
+
 ## [0.0.3] - 2026-02-21
 
 ## [0.0.2] - 2026-02-21
@@ -39,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Test suite with 95% coverage
 
 [Unreleased]: https://github.com/gms1/journalcheck/compare/v0.0.4...HEAD
+[0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
 [0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
 [0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
 [0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
