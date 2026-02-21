@@ -28,6 +28,11 @@ def test_identifier_config_invalid_regex():
         IdentifierConfig(ignore=["[invalid"])
 
 
+def test_identifier_config_invalid_regex_in_violations():
+    with pytest.raises(ValueError, match="Invalid regex pattern"):
+        IdentifierConfig(violations=["[invalid"])
+
+
 def test_identifier_config_invalid_ignore():
     with pytest.raises(ValueError, match="ignore must be a list"):
         IdentifierConfig(ignore={"key": "value"})

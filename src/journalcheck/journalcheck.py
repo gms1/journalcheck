@@ -261,7 +261,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
                 if last_boot_id and this_boot_id and this_boot_id != last_boot_id:
                     output_lines.append("-- Reboot --")
                 last_boot_id = this_boot_id
-            
+
             output_lines.append(format_entry(entry, config.format, severity))
 
     if not output_lines:
