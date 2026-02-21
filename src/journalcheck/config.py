@@ -250,7 +250,6 @@ class Config:
                     f"Identifier '{ident}' must be a dict, "
                     f"got {type(ident_config).__name__}"
                 )
-
         return cls(
             priority=priority,
             format=data.get(ConfigKeys.FORMAT, "short"),

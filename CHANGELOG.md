@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixes
 
 - fixed unexpected error: Unknown keys in config: output_command
+- fixed missing properties when merging
 
 ## [0.0.5] - 2026-02-21
 

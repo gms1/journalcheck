@@ -50,6 +50,13 @@ def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, An
         data[ConfigKeys.FORMAT] = loaded[ConfigKeys.FORMAT]
     if ConfigKeys.CURSOR_FILE in loaded:
         data[ConfigKeys.CURSOR_FILE] = loaded[ConfigKeys.CURSOR_FILE]
+    if ConfigKeys.OUTPUT_COMMAND in loaded:
+        data[ConfigKeys.OUTPUT_COMMAND] = loaded[ConfigKeys.OUTPUT_COMMAND]
+    if ConfigKeys.EMAIL_TO in loaded:
+        data[ConfigKeys.EMAIL_TO] = loaded[ConfigKeys.EMAIL_TO]
+    if ConfigKeys.EMAIL_SUBJECT in loaded:
+        data[ConfigKeys.EMAIL_SUBJECT] = loaded[ConfigKeys.EMAIL_SUBJECT]
+
     if loaded.get(ConfigKeys.IDENTIFIERS) is not None:
         if not isinstance(loaded.get(ConfigKeys.IDENTIFIERS), dict):
             raise ValueError(
