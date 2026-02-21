@@ -49,6 +49,28 @@ Download the `.deb` file from the [releases page](https://github.com/gms1/journa
 sudo dpkg -i journalcheck_*.deb
 ```
 
+### via APT Repository
+
+> NOTE: SORRY, THIS IS WORK IN PROGRESS!
+
+- download the public key:
+
+```bash
+curl -fsSL https://gms1.github.io/journalcheck/apt/public.gpg | sudo gpg --dearmor -o /usr/share/keyrings/journalcheck-archive-keyring.gpg
+```
+
+- register the apt repository
+
+```bash
+echo "deb [signed-by=/usr/share/keyrings/journalcheck-archive-keyring.gpg] https://gms1.github.io/journalcheck/apt ./" | sudo tee /etc/apt/sources.list.d/journalcheck.list
+```
+
+- install this package
+
+```bash
+sudo apt update && sudo apt install journalcheck
+```
+
 ### From source
 
 ```bash
@@ -104,8 +126,6 @@ The following identifiers have pre-configured violation patterns that are automa
 - **kernel**: I/O error, Buffer I/O error, end_request: I/O error
 
 You can add additional violations to these identifiers - they will be appended to the defaults.
-```
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.

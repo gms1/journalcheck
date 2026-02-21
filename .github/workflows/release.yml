@@ -40,3 +40,15 @@ jobs:
       with:
         files: |
           dist/*
+    - name: Update APT Repository
+      uses: dev-drprasad/debian-package-repository-action@v2
+      with:
+        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
+        gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
+        reprepro_src: false
+        package_directory: 'dist' # directory containing the .deb package
+        repository_name: 'journalcheck'
+        branch: gh-pages
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        public_key: public.gpg
+        base_path: apt
