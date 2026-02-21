@@ -17,7 +17,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsystemd-dev libsqlite3-dev
+        sudo apt-get install -y libsystemd-dev libsqlite3-dev build-essential debhelper devscripts
         pip install -e .
         pip install -r requirements.txt
     - name: Lint
@@ -28,3 +28,7 @@ jobs:
       uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
+    - name: Build Debian package
+      run: |
+        ./scripts/debian.sh
+
