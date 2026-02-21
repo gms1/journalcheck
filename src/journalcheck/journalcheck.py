@@ -15,6 +15,7 @@ from .config import (
     DEFAULT_CONFIG_FILE,
     DEFAULT_CONFIG_DIR,
     DEFAULT_CURSOR_FILE,
+    VALID_CONFIG_KEYS,
     Config,
     ConfigKeys,
     IdentifierConfigKeys,
@@ -39,13 +40,7 @@ class Severity:
 
 
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
-    valid_keys = {
-        ConfigKeys.PRIORITY,
-        ConfigKeys.FORMAT,
-        ConfigKeys.CURSOR_FILE,
-        ConfigKeys.IDENTIFIERS,
-    }
-    unknown_keys = set(loaded.keys()) - valid_keys
+    unknown_keys = set(loaded.keys()) - VALID_CONFIG_KEYS
     if unknown_keys:
         raise ValueError(f"Unknown keys in config: {', '.join(sorted(unknown_keys))}")
 

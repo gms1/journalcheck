@@ -35,6 +35,13 @@ class IdentifierConfigKeys:
     VIOLATIONS = "violations"
 
 
+VALID_IDENTIFIER_CONFIG_KEYS = {
+    IdentifierConfigKeys.PRIORITY,
+    IdentifierConfigKeys.IGNORE,
+    IdentifierConfigKeys.VIOLATIONS,
+}
+
+
 class ConfigKeys:
     PRIORITY = "priority"
     FORMAT = "format"
@@ -43,6 +50,17 @@ class ConfigKeys:
     EMAIL_TO = "email_to"
     EMAIL_SUBJECT = "email_subject"
     IDENTIFIERS = "identifiers"
+
+
+VALID_CONFIG_KEYS = {
+    ConfigKeys.PRIORITY,
+    ConfigKeys.FORMAT,
+    ConfigKeys.CURSOR_FILE,
+    ConfigKeys.OUTPUT_COMMAND,
+    ConfigKeys.EMAIL_TO,
+    ConfigKeys.EMAIL_SUBJECT,
+    ConfigKeys.IDENTIFIERS,
+}
 
 
 DEFAULT_VIOLATIONS: dict[str, list[str]] = {
@@ -114,12 +132,7 @@ class IdentifierConfig:
     def from_dict(
         cls, data: dict[str, Any], identifier: str = ""
     ) -> "IdentifierConfig":
-        valid_keys = {
-            IdentifierConfigKeys.PRIORITY,
-            IdentifierConfigKeys.IGNORE,
-            IdentifierConfigKeys.VIOLATIONS,
-        }
-        unknown_keys = set(data.keys()) - valid_keys
+        unknown_keys = set(data.keys()) - VALID_IDENTIFIER_CONFIG_KEYS
         if unknown_keys:
             raise ValueError(
                 f"Unknown keys in identifier config: {', '.join(sorted(unknown_keys))}"
@@ -216,16 +229,7 @@ class Config:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Config":
-        valid_keys = {
-            ConfigKeys.PRIORITY,
-            ConfigKeys.FORMAT,
-            ConfigKeys.CURSOR_FILE,
-            ConfigKeys.OUTPUT_COMMAND,
-            ConfigKeys.EMAIL_TO,
-            ConfigKeys.EMAIL_SUBJECT,
-            ConfigKeys.IDENTIFIERS,
-        }
-        unknown_keys = set(data.keys()) - valid_keys
+        unknown_keys = set(data.keys()) - VALID_CONFIG_KEYS
         if unknown_keys:
             raise ValueError(
                 f"Unknown keys in config: {', '.join(sorted(unknown_keys))}"

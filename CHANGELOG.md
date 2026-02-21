@@ -7,23 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Features
+
+### Fixes
+
+- fixed unexpected error: Unknown keys in config: output_command
+
 ## [0.0.5] - 2026-02-21
 
-## [0.0.4] - 2026-02-21
-
-## [0.0.4] - 2026-02-21
-
-## [0.0.4] - 2026-02-21
-
-## [0.0.4] - 2026-02-21
-
-## [0.0.3] - 2026-02-21
-
-## [0.0.2] - 2026-02-21
-
-## [0.0.1] - 2026-02-21
-
-### Added
+### Featurs
 - Initial release
 - Priority-based filtering with systemd journal integration
 - Per-identifier priority configuration
@@ -44,10 +36,3 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 [Unreleased]: https://github.com/gms1/journalcheck/compare/v0.0.5...HEAD
 [0.0.5]: https://github.com/gms1/journalcheck/releases/tag/v0.0.5
-[0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
-[0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
-[0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
-[0.0.4]: https://github.com/gms1/journalcheck/releases/tag/v0.0.4
-[0.0.3]: https://github.com/gms1/journalcheck/releases/tag/v0.0.3
-[0.0.2]: https://github.com/gms1/journalcheck/releases/tag/v0.0.2
-[0.0.1]: https://github.com/gms1/journalcheck/releases/tag/v0.0.1
