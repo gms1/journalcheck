@@ -17,7 +17,8 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsystemd-dev libsqlite3-dev build-essential debhelper devscripts
+        sudo apt-get install -y libsystemd-dev libsqlite3-dev
+        sudo apt-get install -y build-essential debhelper devscripts python3-all python3-build python3-installer pybuild-plugin-pyproject
         pip install -e .
         pip install -r requirements.txt
     - name: Lint
