@@ -31,6 +31,7 @@ class JournalFields:
     HOSTNAME = "_HOSTNAME"
     CURSOR = "__CURSOR"
     SEVERITY = "SEVERITY"
+    BOOT_ID = "_BOOT_ID"
 
 
 class Severity:
@@ -250,9 +251,17 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
     # Collect output
     output_lines: list[str] = []
+    last_boot_id: str | None = None
     for entry in reader:
         show, severity = should_show_entry(entry, config)
         if show:
+            # Check for reboot (only for non-json format)
+            if config.format != "json":
+                this_boot_id = entry.get(JournalFields.BOOT_ID)
+                if last_boot_id and this_boot_id and this_boot_id != last_boot_id:
+                    output_lines.append("-- Reboot --")
+                last_boot_id = this_boot_id
+            
             output_lines.append(format_entry(entry, config.format, severity))
 
     if not output_lines:
