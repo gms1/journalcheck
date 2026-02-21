@@ -80,6 +80,12 @@ class IdentifierConfig:
     priority: int | None = None
     ignore: list[str] = field(default_factory=list)
     violations: list[str] = field(default_factory=list)
+    _compiled_ignore: list[re.Pattern[str]] = field(
+        default_factory=list, init=False, repr=False
+    )
+    _compiled_violations: list[re.Pattern[str]] = field(
+        default_factory=list, init=False, repr=False
+    )
 
     def __post_init__(self):
         if self.priority is not None and not 0 <= self.priority <= 7:
@@ -90,9 +96,17 @@ class IdentifierConfig:
             raise ValueError(
                 f"violations must be a list, got {type(self.violations).__name__}"
             )
-        for pattern in self.ignore + self.violations:
+        # Compile patterns once
+        self._compiled_ignore = []
+        self._compiled_violations = []
+        for pattern in self.ignore:
             try:
-                re.compile(pattern)
+                self._compiled_ignore.append(re.compile(pattern, re.IGNORECASE))
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern '{pattern}': {e}")
+        for pattern in self.violations:
+            try:
+                self._compiled_violations.append(re.compile(pattern, re.IGNORECASE))
             except re.error as e:
                 raise ValueError(f"Invalid regex pattern '{pattern}': {e}")
 
@@ -151,55 +165,54 @@ class Config:
     email_to: str | None = None
     email_subject: str = "Journal Alerts"
     identifiers: dict[str, IdentifierConfig] = field(default_factory=dict)
+    _compiled_identifier_patterns: list[tuple[re.Pattern[str], IdentifierConfig]] = (
+        field(default_factory=list, init=False, repr=False)
+    )
 
     def __post_init__(self):
         if not 0 <= self.priority <= 7:
             raise ValueError(f"Priority must be 0-7, got {self.priority}")
         if self.format not in ["short", "json"]:
             raise ValueError(f"Format must be 'short' or 'json', got '{self.format}'")
-        for ident in self.identifiers:
+        # Compile regex identifier patterns once
+        self._compiled_identifier_patterns = []
+        for ident, ident_config in self.identifiers.items():
             if ident.startswith("/") and ident.endswith("/"):
                 try:
-                    re.compile(ident[1:-1])
+                    pattern = re.compile(ident[1:-1])
+                    self._compiled_identifier_patterns.append((pattern, ident_config))
                 except re.error as e:
                     raise ValueError(f"Invalid regex identifier '{ident}': {e}")
 
-    def get_config_for_identifier(self, ident: str) -> tuple[int, list[str], list[str]]:
-        """Get effective priority, violations, and ignore patterns for an identifier.
+    def get_config_for_identifier(self, ident: str) -> tuple[int, IdentifierConfig]:
+        """Get effective priority and config for an identifier.
 
-        Returns: (priority, violations, ignore)
+        Returns: (priority, identifier_config)
         """
         # Check exact match first
         if ident and ident in self.identifiers:
             ident_config = self.identifiers[ident]
-            return (
-                (
-                    ident_config.priority
-                    if ident_config.priority is not None
-                    else self.priority
-                ),
-                ident_config.violations,
-                ident_config.ignore,
+            effective_priority = (
+                ident_config.priority
+                if ident_config.priority is not None
+                else self.priority
             )
+            return effective_priority, ident_config
 
-        # Check regex patterns
+        # Check compiled regex patterns
         if ident:
-            for pattern, pattern_config in self.identifiers.items():
-                if pattern.startswith("/") and pattern.endswith("/"):
-                    regex = pattern[1:-1]
-                    if re.match(regex, ident):
-                        return (
-                            (
-                                pattern_config.priority
-                                if pattern_config.priority is not None
-                                else self.priority
-                            ),
-                            pattern_config.violations,
-                            pattern_config.ignore,
-                        )
+            for pattern, pattern_config in self._compiled_identifier_patterns:
+                if pattern.match(ident):
+                    effective_priority = (
+                        pattern_config.priority
+                        if pattern_config.priority is not None
+                        else self.priority
+                    )
+                    return effective_priority, pattern_config
 
-        # Default
-        return self.priority, [], []
+        # Default - return empty config
+        empty_config = IdentifierConfig()
+        return self.priority, empty_config
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Config":

@@ -6,7 +6,6 @@ import yaml
 from pathlib import Path
 import argparse
 import json
-import re
 import os
 import subprocess
 from datetime import datetime, timedelta
@@ -158,11 +157,11 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
     message: str = entry.get(JournalFields.MESSAGE, "")
 
     # Get effective config for this identifier
-    effective_priority, violations, ignore = config.get_config_for_identifier(ident)
+    effective_priority, ident_config = config.get_config_for_identifier(ident)
 
     # Check violations first (always shown)
-    for pattern in violations:
-        if re.search(pattern, message, re.IGNORECASE):
+    for pattern in ident_config._compiled_violations:
+        if pattern.search(message):
             return True, Severity.VIOLATION
 
     # Check priority
@@ -170,8 +169,8 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
         return False, ""
 
     # Check ignore patterns last (with implicit anchors)
-    for pattern in ignore:
-        if re.fullmatch(pattern, message, re.IGNORECASE):
+    for pattern in ident_config._compiled_ignore:
+        if pattern.fullmatch(message):
             return False, ""
 
     return True, ""
