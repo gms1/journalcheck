@@ -3,17 +3,21 @@ DN=$(dirname -- "${BASH_SOURCE[0]}"})
 set -e
 cd "${DN}/.."
 
+export PYBUILD_PYTHON_EXE=/usr/bin/python3
+
 # Get workspace root
 WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 VERSION=$(grep '^__version__ = ' "${WORKSPACE_ROOT}/src/journalcheck/__init__.py" | sed 's/__version__ = "\(.*\)"/\1/')
 PKG_DIR="${WORKSPACE_ROOT}/journalcheck-${VERSION}"
 DIST_DIR="${WORKSPACE_ROOT}/dist"
 
+BUILD_PACKAGES=(build-essential devscripts debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build python3-installer)
 
-if ! dpkg -s debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build &> /dev/null; then
+
+if ! dpkg -s "${BUILD_PACKAGES[@]}" &> /dev/null; then
 
   sudo apt-get update
-  sudo apt-get install -y debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build
+  sudo apt-get install -y "${BUILD_PACKAGES[@]}"
 
 fi
 
