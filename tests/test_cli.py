@@ -1,6 +1,7 @@
 import tempfile
 import yaml
 from journalcheck.journalcheck import run, parse_args, load_config
+from journalcheck.config import ConfigKeys, IdentifierConfigKeys
 from systemd import journal
 from pathlib import Path
 import io
@@ -38,14 +39,14 @@ def test_run_with_cursor_file():
 
         # Create config with violations and ignore patterns
         config_data = {
-            "priority": "emerg",
-            "format": "short",
-            "cursor_file": str(cursor_file),
-            "identifiers": {
+            ConfigKeys.PRIORITY: "emerg",
+            ConfigKeys.FORMAT: "short",
+            ConfigKeys.CURSOR_FILE: str(cursor_file),
+            ConfigKeys.IDENTIFIERS: {
                 "sshd": {
-                    "priority": "info",
-                    "ignore": ["Accepted publickey.*"],
-                    "violations": ["Failed password"],
+                    IdentifierConfigKeys.PRIORITY: "info",
+                    IdentifierConfigKeys.IGNORE: ["Accepted publickey.*"],
+                    IdentifierConfigKeys.VIOLATIONS: ["Failed password"],
                 }
             },
         }
@@ -92,14 +93,14 @@ def test_run_without_cursor_file():
 
         # Create config with violations and ignore patterns
         config_data = {
-            "priority": "emerg",
-            "format": "short",
-            "cursor_file": None,
-            "identifiers": {
+            ConfigKeys.PRIORITY: "emerg",
+            ConfigKeys.FORMAT: "short",
+            ConfigKeys.CURSOR_FILE: None,
+            ConfigKeys.IDENTIFIERS: {
                 "sshd": {
-                    "priority": "info",
-                    "ignore": ["Accepted publickey.*"],
-                    "violations": ["Failed password"],
+                    IdentifierConfigKeys.PRIORITY: "info",
+                    IdentifierConfigKeys.IGNORE: ["Accepted publickey.*"],
+                    IdentifierConfigKeys.VIOLATIONS: ["Failed password"],
                 }
             },
         }

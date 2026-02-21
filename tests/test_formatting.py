@@ -4,16 +4,17 @@ from journalcheck.journalcheck import (
     format_entry,
     get_identifier,
     format_identifier_with_pid,
+    JournalFields,
 )
 
 
 def test_get_identifier_syslog():
-    entry = {"SYSLOG_IDENTIFIER": "test"}
+    entry = {JournalFields.SYSLOG_IDENTIFIER: "test"}
     assert get_identifier(entry) == "test"
 
 
 def test_get_identifier_comm():
-    entry = {"_COMM": "testcomm"}
+    entry = {JournalFields.COMM: "testcomm"}
     assert get_identifier(entry) == "testcomm"
 
 
@@ -23,27 +24,27 @@ def test_get_identifier_empty():
 
 
 def test_format_identifier_with_pid_syslog():
-    entry = {"SYSLOG_IDENTIFIER": "test", "_PID": 1234}
+    entry = {JournalFields.SYSLOG_IDENTIFIER: "test", JournalFields.PID: 1234}
     assert format_identifier_with_pid(entry) == "test[1234]"
 
 
 def test_format_identifier_with_pid_comm():
-    entry = {"_COMM": "test", "_PID": 1234}
+    entry = {JournalFields.COMM: "test", JournalFields.PID: 1234}
     assert format_identifier_with_pid(entry) == "(test)[1234]"
 
 
 def test_format_identifier_with_pid_no_pid():
-    entry = {"SYSLOG_IDENTIFIER": "test"}
+    entry = {JournalFields.SYSLOG_IDENTIFIER: "test"}
     assert format_identifier_with_pid(entry) == "test"
 
 
 def test_format_identifier_with_pid_no_syslog_no_comm():
-    entry = {"_PID": 1234}
+    entry = {JournalFields.PID: 1234}
     assert format_identifier_with_pid(entry) == "[1234]"
 
 
 def test_format_entry_json():
-    entry = {"MESSAGE": "test", "_HOSTNAME": "host"}
+    entry = {JournalFields.MESSAGE: "test", JournalFields.HOSTNAME: "host"}
     result = format_entry(entry, "json", Severity.VIOLATION)
     assert "test" in result
     assert "host" in result
@@ -52,10 +53,10 @@ def test_format_entry_json():
 
 def test_format_entry_short():
     entry = {
-        "__REALTIME_TIMESTAMP": datetime(2024, 1, 1, 12, 0, 0),
-        "_HOSTNAME": "testhost",
-        "SYSLOG_IDENTIFIER": "testapp",
-        "MESSAGE": "test message",
+        JournalFields.REALTIME_TIMESTAMP: datetime(2024, 1, 1, 12, 0, 0),
+        JournalFields.HOSTNAME: "testhost",
+        JournalFields.SYSLOG_IDENTIFIER: "testapp",
+        JournalFields.MESSAGE: "test message",
     }
     result = format_entry(entry, "short")
     assert "testhost" in result
@@ -65,11 +66,11 @@ def test_format_entry_short():
 
 def test_format_entry_with_pid():
     entry = {
-        "__REALTIME_TIMESTAMP": 4321,  # datetime(2024, 1, 1, 12, 0, 0),
-        "_HOSTNAME": "testhost",
-        "SYSLOG_IDENTIFIER": "testapp",
-        "_PID": 1234,
-        "MESSAGE": "test message",
+        JournalFields.REALTIME_TIMESTAMP: 4321,
+        JournalFields.HOSTNAME: "testhost",
+        JournalFields.SYSLOG_IDENTIFIER: "testapp",
+        JournalFields.PID: 1234,
+        JournalFields.MESSAGE: "test message",
     }
     result = format_entry(entry, "short")
     assert "4321" in result
@@ -78,9 +79,9 @@ def test_format_entry_with_pid():
 
 def test_format_entry_without_timestamp():
     entry = {
-        "_HOSTNAME": "testhost",
-        "SYSLOG_IDENTIFIER": "testapp",
-        "MESSAGE": "test message",
+        JournalFields.HOSTNAME: "testhost",
+        JournalFields.SYSLOG_IDENTIFIER: "testapp",
+        JournalFields.MESSAGE: "test message",
     }
     result = format_entry(entry, "short")
     assert datetime.now().strftime("%b %d") in result

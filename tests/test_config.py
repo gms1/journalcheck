@@ -1,5 +1,11 @@
 import pytest
-from journalcheck.config import Config, IdentifierConfig, PRIORITY_NAMES
+from journalcheck.config import (
+    Config,
+    IdentifierConfig,
+    PRIORITY_NAMES,
+    ConfigKeys,
+    IdentifierConfigKeys,
+)
 
 
 def test_normalize_priority_string():
@@ -53,7 +59,11 @@ def test_config_invalid_regex_identifier():
 
 
 def test_identifier_config_from_dict():
-    data = {"priority": "warning", "ignore": [".*test.*"], "violations": ["fail"]}
+    data = {
+        IdentifierConfigKeys.PRIORITY: "warning",
+        IdentifierConfigKeys.IGNORE: [".*test.*"],
+        IdentifierConfigKeys.VIOLATIONS: ["fail"],
+    }
     config = IdentifierConfig.from_dict(data)
     assert config.priority == 4
     assert config.ignore == [".*test.*"]
@@ -62,11 +72,14 @@ def test_identifier_config_from_dict():
 
 def test_config_from_dict():
     data = {
-        "priority": "err",
-        "format": "json",
-        "identifiers": {
-            "ssh": {"priority": 6, "violations": ["BREAK-IN"]},
-            "kernel": {"priority": 3},
+        ConfigKeys.PRIORITY: "err",
+        ConfigKeys.FORMAT: "json",
+        ConfigKeys.IDENTIFIERS: {
+            "ssh": {
+                IdentifierConfigKeys.PRIORITY: 6,
+                IdentifierConfigKeys.VIOLATIONS: ["BREAK-IN"],
+            },
+            "kernel": {IdentifierConfigKeys.PRIORITY: 3},
         },
     }
     config = Config.from_dict(data)
@@ -80,29 +93,31 @@ def test_config_from_dict():
 
 def test_config_unknown_key():
     with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
-        Config.from_dict({"priority": 6, "unknown_key": "value"})
+        Config.from_dict({ConfigKeys.PRIORITY: 6, "unknown_key": "value"})
 
 
 def test_identifier_config_unknown_key():
     with pytest.raises(
         ValueError, match="Unknown keys in identifier config: unknown_key"
     ):
-        IdentifierConfig.from_dict({"priority": 6, "unknown_key": "value"})
+        IdentifierConfig.from_dict(
+            {IdentifierConfigKeys.PRIORITY: 6, "unknown_key": "value"}
+        )
 
 
 def test_identifier_config_to_dict():
     config = IdentifierConfig(priority=4, ignore=["test"], violations=["fail"])
     result = config.to_dict()
-    assert result["priority"] == "warning"
-    assert result["ignore"] == ["test"]
-    assert result["violations"] == ["fail"]
+    assert result[IdentifierConfigKeys.PRIORITY] == "warning"
+    assert result[IdentifierConfigKeys.IGNORE] == ["test"]
+    assert result[IdentifierConfigKeys.VIOLATIONS] == ["fail"]
 
     # Test with no priority set (should not include priority in output)
     config_no_priority = IdentifierConfig(ignore=["test"], violations=["fail"])
     result_no_priority = config_no_priority.to_dict()
-    assert "priority" not in result_no_priority
-    assert result_no_priority["ignore"] == ["test"]
-    assert result_no_priority["violations"] == ["fail"]
+    assert IdentifierConfigKeys.PRIORITY not in result_no_priority
+    assert result_no_priority[IdentifierConfigKeys.IGNORE] == ["test"]
+    assert result_no_priority[IdentifierConfigKeys.VIOLATIONS] == ["fail"]
 
 
 def test_config_to_dict():
@@ -116,25 +131,31 @@ def test_config_to_dict():
         identifiers={"ssh": IdentifierConfig(priority=6, violations=["Failed"])},
     )
     result = config.to_dict()
-    assert result["priority"] == "err"
-    assert result["format"] == "json"
-    assert result["cursor_file"] == "/tmp/cursor"
-    assert result["output_command"] == "echo test"
-    assert result["email_to"] == "admin@example.com"
-    assert result["email_subject"] == "Test Alert"
-    assert result["identifiers"]["ssh"]["priority"] == "info"
-    assert result["identifiers"]["ssh"]["violations"] == ["Failed"]
+    assert result[ConfigKeys.PRIORITY] == "err"
+    assert result[ConfigKeys.FORMAT] == "json"
+    assert result[ConfigKeys.CURSOR_FILE] == "/tmp/cursor"
+    assert result[ConfigKeys.OUTPUT_COMMAND] == "echo test"
+    assert result[ConfigKeys.EMAIL_TO] == "admin@example.com"
+    assert result[ConfigKeys.EMAIL_SUBJECT] == "Test Alert"
+    assert result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.PRIORITY] == "info"
+    assert result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.VIOLATIONS] == [
+        "Failed"
+    ]
 
 
 def test_default_violations_sshd():
-    config = Config.from_dict({"identifiers": {"sshd": {}}})
+    config = Config.from_dict({ConfigKeys.IDENTIFIERS: {"sshd": {}}})
     assert len(config.identifiers["sshd"].violations) > 0
     assert any("Failed password" in v for v in config.identifiers["sshd"].violations)
 
 
 def test_default_violations_with_custom():
     config = Config.from_dict(
-        {"identifiers": {"sshd": {"violations": ["custom pattern"]}}}
+        {
+            ConfigKeys.IDENTIFIERS: {
+                "sshd": {IdentifierConfigKeys.VIOLATIONS: ["custom pattern"]}
+            }
+        }
     )
     violations = config.identifiers["sshd"].violations
     assert "custom pattern" in violations

@@ -3,7 +3,7 @@ import pytest
 import yaml
 from pathlib import Path
 from journalcheck.journalcheck import load_config
-from journalcheck.config import Config, ConfigKeys, IdentifierConfig
+from journalcheck.config import Config, ConfigKeys, IdentifierConfig, IdentifierConfigKeys
 
 
 def test_load_config_default():
@@ -15,7 +15,7 @@ def test_load_config_default():
 
 def test_load_config_from_file():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"priority": 3, "format": "json"}, f)
+        yaml.dump({ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: "json"}, f)
         config_file = f.name
 
     try:
@@ -34,7 +34,7 @@ def test_load_config_with_args():
 
 def test_load_config_with_empty_identifiers():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"identifiers": None}, f)
+        yaml.dump({ConfigKeys.IDENTIFIERS: None}, f)
         config_file = f.name
 
     try:
@@ -48,8 +48,12 @@ def test_load_config_with_identifiers_having_empty_ignore_and_violations():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         yaml.dump(
             {
-                "identifiers": {
-                    "kernel": {"priority": 4, "ignore": None, "violations": None}
+                ConfigKeys.IDENTIFIERS: {
+                    "kernel": {
+                        IdentifierConfigKeys.PRIORITY: 4,
+                        IdentifierConfigKeys.IGNORE: None,
+                        IdentifierConfigKeys.VIOLATIONS: None,
+                    }
                 }
             },
             f,
@@ -65,7 +69,7 @@ def test_load_config_with_identifiers_having_empty_ignore_and_violations():
 
 def test_load_config_priority_names():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"priority": "warning"}, f)
+        yaml.dump({ConfigKeys.PRIORITY: "warning"}, f)
         config_file = f.name
 
     try:
@@ -77,7 +81,14 @@ def test_load_config_priority_names():
 
 def test_load_config_identifier_int_normalization():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"identifiers": {"kernel": {"priority": "warning"}}}, f)
+        yaml.dump(
+            {
+                ConfigKeys.IDENTIFIERS: {
+                    "kernel": {IdentifierConfigKeys.PRIORITY: "warning"}
+                }
+            },
+            f,
+        )
         config_file = f.name
 
     try:
@@ -107,7 +118,7 @@ def test_load_config_raises_yaml_parse_error():
 
 def test_load_config_validates_priority():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"priority": 10}, f)
+        yaml.dump({ConfigKeys.PRIORITY: 10}, f)
         config_file = f.name
 
     try:
@@ -119,7 +130,7 @@ def test_load_config_validates_priority():
 
 def test_load_config_validates_format():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"format": "invalid"}, f)
+        yaml.dump({ConfigKeys.FORMAT: "invalid"}, f)
         config_file = f.name
 
     try:
@@ -131,7 +142,7 @@ def test_load_config_validates_format():
 
 def test_load_config_custom_file_no_default_cursor():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"priority": 6}, f)
+        yaml.dump({ConfigKeys.PRIORITY: 6}, f)
         config_file = f.name
 
     try:
@@ -143,7 +154,7 @@ def test_load_config_custom_file_no_default_cursor():
 
 def test_load_config_custom_file_with_cursor():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"cursor_file": "/tmp/custom_cursor"}, f)
+        yaml.dump({ConfigKeys.CURSOR_FILE: "/tmp/custom_cursor"}, f)
         config_file = f.name
 
     try:
@@ -155,7 +166,7 @@ def test_load_config_custom_file_with_cursor():
 
 def test_load_config_unknown_key():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({"priority": 6, "unknown_key": "value"}, f)
+        yaml.dump({ConfigKeys.PRIORITY: 6, "unknown_key": "value"}, f)
         config_file = f.name
 
     try:
@@ -193,11 +204,11 @@ def test_load_config_merge_appends_lists():
         with open(main_config, "w") as f:
             yaml.dump(
                 {
-                    "identifiers": {
+                    ConfigKeys.IDENTIFIERS: {
                         "ssh": {
-                            "priority": 6,
-                            "ignore": ["pattern1"],
-                            "violations": ["violation1"],
+                            IdentifierConfigKeys.PRIORITY: 6,
+                            IdentifierConfigKeys.IGNORE: ["pattern1"],
+                            IdentifierConfigKeys.VIOLATIONS: ["violation1"],
                         }
                     }
                 },
@@ -211,8 +222,11 @@ def test_load_config_merge_appends_lists():
         with open(additional_config, "w") as f:
             yaml.dump(
                 {
-                    "identifiers": {
-                        "ssh": {"ignore": ["pattern2"], "violations": ["violation2"]}
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {
+                            IdentifierConfigKeys.IGNORE: ["pattern2"],
+                            IdentifierConfigKeys.VIOLATIONS: ["violation2"],
+                        }
                     }
                 },
                 f,
@@ -242,14 +256,21 @@ def test_load_config_merge_no_identifiers_in_main():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"priority": 6}, f)
+            yaml.dump({ConfigKeys.PRIORITY: 6}, f)
 
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.PRIORITY: 4}
+                    }
+                },
+                f,
+            )
 
         from journalcheck import journalcheck
 
@@ -273,7 +294,12 @@ def test_load_config_merge_overrides():
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
             yaml.dump(
-                {"priority": 6, "format": "short", "cursor_file": "/tmp/cursor1"}, f
+                {
+                    ConfigKeys.PRIORITY: 6,
+                    ConfigKeys.FORMAT: "short",
+                    ConfigKeys.CURSOR_FILE: "/tmp/cursor1",
+                },
+                f,
             )
 
         config_dir = Path(tmpdir) / "config.d"
@@ -282,7 +308,12 @@ def test_load_config_merge_overrides():
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
             yaml.dump(
-                {"priority": 4, "format": "json", "cursor_file": "/tmp/cursor2"}, f
+                {
+                    ConfigKeys.PRIORITY: 4,
+                    ConfigKeys.FORMAT: "json",
+                    ConfigKeys.CURSOR_FILE: "/tmp/cursor2",
+                },
+                f,
             )
 
         from journalcheck import journalcheck
@@ -307,14 +338,21 @@ def test_load_config_merge_overrides_no_identifiers():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"priority": 6}, f)
+            yaml.dump({ConfigKeys.PRIORITY: 6}, f)
 
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({"priority": 4, "format": "json", "cursor_file": "/tmp/test"}, f)
+            yaml.dump(
+                {
+                    ConfigKeys.PRIORITY: 4,
+                    ConfigKeys.FORMAT: "json",
+                    ConfigKeys.CURSOR_FILE: "/tmp/test",
+                },
+                f,
+            )
 
         from journalcheck import journalcheck
 
@@ -338,7 +376,7 @@ def test_load_config_merge_non_dict_identifier():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": 4}}, f)
+            yaml.dump({ConfigKeys.IDENTIFIERS: {"ssh": 4}}, f)
 
         from journalcheck import journalcheck
 
@@ -357,14 +395,16 @@ def test_load_config_merge_dict_to_int_identifier():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+            yaml.dump(
+                {ConfigKeys.IDENTIFIERS: {"ssh": {IdentifierConfigKeys.PRIORITY: 4}}}, f
+            )
 
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": 6}}, f)
+            yaml.dump({ConfigKeys.IDENTIFIERS: {"ssh": 6}}, f)
 
         from journalcheck import journalcheck
 
@@ -386,14 +426,14 @@ def test_load_config_unknown_key_in_config_dir():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"priority": 6}, f)
+            yaml.dump({ConfigKeys.PRIORITY: 6}, f)
 
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({"priority": 4, "unknown_key": "value"}, f)
+            yaml.dump({ConfigKeys.PRIORITY: 4, "unknown_key": "value"}, f)
 
         from journalcheck import journalcheck
 
@@ -415,14 +455,28 @@ def test_load_config_merge_priority_override():
     with tempfile.TemporaryDirectory() as tmpdir:
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": {"priority": 4}}}, f)
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.PRIORITY: 4}
+                    }
+                },
+                f,
+            )
 
         config_dir = Path(tmpdir) / "config.d"
         config_dir.mkdir()
 
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
-            yaml.dump({"identifiers": {"ssh": {"priority": 6}}}, f)
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.PRIORITY: 6}
+                    }
+                },
+                f,
+            )
 
         from journalcheck import journalcheck
 
