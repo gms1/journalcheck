@@ -102,6 +102,11 @@ def load_config(
             raise FileNotFoundError(f"Config file not found: {config_file}")
         config_dir = None
     else:
+        # Check for .yml alternative if .yaml doesn't exist
+        if not config_file.exists():
+            yml_alternative = config_file.with_suffix(".yml")
+            if yml_alternative.exists():
+                config_file = yml_alternative
         data[ConfigKeys.CURSOR_FILE] = DEFAULT_CURSOR_FILE
 
     config_files: list[Path] = []
@@ -111,7 +116,9 @@ def load_config(
         config_files.append(config_file)
 
     if config_dir and config_dir.exists() and config_dir.is_dir():
-        config_files.extend(sorted(config_dir.glob("*.yaml")))
+        yaml_files = list(config_dir.glob("*.yaml"))
+        yml_files = list(config_dir.glob("*.yml"))
+        config_files.extend(sorted(yaml_files + yml_files))
 
     for yaml_file in config_files:
         with open(yaml_file) as f:

@@ -492,3 +492,133 @@ def test_load_config_merge_priority_override():
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
             journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_supports_yml_extension():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({ConfigKeys.PRIORITY: 6}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        # Create .yml file
+        yml_config = config_dir / "01-test.yml"
+        with open(yml_config, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "kernel": {IdentifierConfigKeys.PRIORITY: 3}
+                    }
+                },
+                f,
+            )
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            assert config.identifiers["kernel"].priority == 3
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_yml_yaml_sorted_together():
+    """Test that .yml and .yaml files are sorted together alphabetically."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        main_config = Path(tmpdir) / "main.yaml"
+        with open(main_config, "w") as f:
+            yaml.dump({ConfigKeys.PRIORITY: 6}, f)
+
+        config_dir = Path(tmpdir) / "config.d"
+        config_dir.mkdir()
+
+        # Create files that should be loaded in this order: 01.yaml, 02.yml, 03.yaml
+        config_01 = config_dir / "01-first.yaml"
+        with open(config_01, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.IGNORE: ["pattern1"]}
+                    }
+                },
+                f,
+            )
+
+        config_02 = config_dir / "02-second.yml"
+        with open(config_02, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.IGNORE: ["pattern2"]}
+                    }
+                },
+                f,
+            )
+
+        config_03 = config_dir / "03-third.yaml"
+        with open(config_03, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.IDENTIFIERS: {
+                        "ssh": {IdentifierConfigKeys.IGNORE: ["pattern3"]}
+                    }
+                },
+                f,
+            )
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            journalcheck.DEFAULT_CONFIG_FILE = str(main_config)
+            journalcheck.DEFAULT_CONFIG_DIR = str(config_dir)
+
+            config = load_config()
+            # All three patterns should be present in order
+            assert config.identifiers["ssh"].ignore == [
+                "pattern1",
+                "pattern2",
+                "pattern3",
+            ]
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
+
+
+def test_load_config_default_yml_fallback():
+    """Test that .yml is used as fallback if .yaml doesn't exist."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmpdir_path = Path(tmpdir)
+        # Create only .yml file (no .yaml)
+        main_config = tmpdir_path / "journalcheck.yml"
+        with open(main_config, "w") as f:
+            yaml.dump({ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: "json"}, f)
+
+        from journalcheck import journalcheck
+
+        original_default_file = journalcheck.DEFAULT_CONFIG_FILE
+        original_default_dir = journalcheck.DEFAULT_CONFIG_DIR
+
+        try:
+            # Point to .yaml file that doesn't exist
+            journalcheck.DEFAULT_CONFIG_FILE = str(tmpdir_path / "journalcheck.yaml")
+            journalcheck.DEFAULT_CONFIG_DIR = str(tmpdir_path / "config.d")
+
+            config = load_config()
+            # Should load from .yml fallback
+            assert config.priority == 3
+            assert config.format == "json"
+        finally:
+            journalcheck.DEFAULT_CONFIG_FILE = original_default_file
+            journalcheck.DEFAULT_CONFIG_DIR = original_default_dir
