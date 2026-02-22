@@ -1,0 +1,18 @@
+Package: journalcheck
+Architecture: all
+Version: 0.0.7-1
+Priority: optional
+Section: admin
+Maintainer: Guenter Sandner <www.gms@gmx.at>
+Installed-Size: 56
+Depends: python3-systemd, python3-yaml, python3:any
+Filename: ./journalcheck_0.0.7-1_all.deb
+Size: 8902
+MD5sum: e20679318a87fc6ee589a7bd6390e999
+SHA1: d4ab4aae527771907b4cce673fa68ddc3433d2f0
+SHA256: 7174cc99454c547d85515459faff48485dcdfcd06c6905829820aa96e4e6ffd4
+SHA512: bd8123160477b194b25ce433bbbf9f7cf71bd510d10c1e494347441915b83c04503807bcf0fe6fe82509de3af838dd7593f55422903f1c1d3d65693349b5bf8b
+Description: Journal check utility
+ A package for checking systemd journal entries with configurable
+ priority filtering and pattern matching.
+
