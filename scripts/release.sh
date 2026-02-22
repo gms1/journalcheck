@@ -10,6 +10,7 @@ NEW_VERSION_TAG="${1}"
 NEW_VERSION="${NEW_VERSION_TAG#v}"
 REPO_URL="https://github.com/gms1/journalcheck"
 CHANGELOG="CHANGELOG.md"
+CHANGELOG="CHANGELOG-latest.md"
 VERSION_FILE="src/journalcheck/__init__.py"
 DATE=$(date +%Y-%m-%d)
 
@@ -45,6 +46,10 @@ fi
 
 echo "Committing and tagging ${NEW_VERSION_TAG}..."
 git add "${CHANGELOG}" "${VERSION_FILE}"
+
+awk '/^## /{ c+=1 }; c == 2 { print $0 } c>2 { exit }' "${CHANGELOG}" >"${CHANGELOG_LATEST}"
+git add "${CHANGELOG_LATEST}"
+
 git commit -m "Prepare release ${NEW_VERSION_TAG}"
 git tag -a "${NEW_VERSION_TAG}" -m "Release ${NEW_VERSION_TAG}"
 
