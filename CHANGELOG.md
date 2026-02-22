@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.0.7] - 2026-02-22
+
 ## [0.0.6] - 2026-02-22
 
 ### Features
@@ -38,6 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Test suite with 95% coverage
 
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v0.0.6...HEAD
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v0.0.7...HEAD
+[0.0.7]: https://github.com/gms1/journalcheck/releases/tag/v0.0.7
 [0.0.6]: https://github.com/gms1/journalcheck/releases/tag/v0.0.6
 [0.0.5]: https://github.com/gms1/journalcheck/releases/tag/v0.0.5
