@@ -5,15 +5,37 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "journalcheck"
 dynamic = ["version"]
+authors = [
+    {name = "Guenter Sandner", email = "www.gms@gmx.at"},
+]
+description = "Systemd journal monitoring and notification tool with priority filtering, pattern matching and security violation detection"
+readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "systemd-python",
     "PyYAML",
 ]
 license = {text = "MIT"}
+keywords = ["admin", "systemd", "journal", "logging", "logcheck", "monitoring", "security", "audit"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: System Administrators",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: System",
+    "Topic :: System :: Logging",
+    "Topic :: System :: Monitoring",
+    "Topic :: System :: Systems Administration",
+    "Topic :: Utilities",
+]
 
 [project.urls]
 Repository = "https://github.com/gms1/journalcheck"
+Homepage = "https://github.com/gms1/journalcheck"
+"Bug Tracker" = "https://github.com/gms1/journalcheck/issues"
 
 [project.scripts]
 journalcheck = "journalcheck.journalcheck:main"

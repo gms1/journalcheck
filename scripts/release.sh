@@ -10,7 +10,7 @@ NEW_VERSION_TAG="${1}"
 NEW_VERSION="${NEW_VERSION_TAG#v}"
 REPO_URL="https://github.com/gms1/journalcheck"
 CHANGELOG="CHANGELOG.md"
-CHANGELOG="CHANGELOG-latest.md"
+CHANGELOG_LATEST="CHANGELOG-latest.md"
 VERSION_FILE="src/journalcheck/__init__.py"
 DATE=$(date +%Y-%m-%d)
 

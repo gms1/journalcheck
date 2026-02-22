@@ -5,7 +5,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/gms1/journalcheck/pulls)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
-A package for checking systemd journal entries with configurable priority filtering, pattern matching, and security violation detection.
+Systemd journal monitoring and notification tool with priority filtering, pattern matching and security violation detection.
 
 Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designed for systemd's journal with output that can be piped to other programs for notifications, monitoring, or alerting.
 

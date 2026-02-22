@@ -8,6 +8,20 @@ Standards-Version: 4.6.0
 Package: journalcheck
 Architecture: all
 Depends: ${python3:Depends}, ${misc:Depends}, python3-systemd, python3-yaml
-Description: Journal check utility
- A package for checking systemd journal entries with configurable
- priority filtering and pattern matching.
+Enhances: system-log-daemon, systemd
+Description: Systemd journal monitoring and notification tool
+ A tool for auditing systemd journal entries with configurable priority
+ filtering, pattern matching, and security violation detection.
+ .
+ Key features:
+  * Priority-based filtering (emerg, alert, crit, err, warning, notice, info, debug)
+  * Per-service priority configuration
+  * Regex pattern matching for violations and ignore rules
+  * Pre-configured security patterns for common services (sshd, sudo, su, smartd)
+  * Cursor-based tracking (only process new entries)
+  * Multiple output formats (short, json)
+  * Flexible notification via email, commands, or stdout
+  * Systemd timer integration for automated monitoring
+ .
+ Inspired by logcheck but designed for systemd's journal with modern features
+ like JSON output and flexible notification options.
