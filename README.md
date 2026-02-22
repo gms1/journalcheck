@@ -51,7 +51,7 @@ sudo dpkg -i journalcheck_*.deb
 
 ### via APT Repository
 
-> NOTE: SORRY, THIS IS WORK IN PROGRESS!
+> NOTE: WORK IN PROGRESS!
 
 - download the public key:
 
@@ -126,15 +126,6 @@ The following identifiers have pre-configured violation patterns that are automa
 - **kernel**: I/O error, Buffer I/O error, end_request: I/O error
 
 You can add additional violations to these identifiers - they will be appended to the defaults.
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-## Repository
-
-https://github.com/gms1/journalcheck
-
-
 ## Usage
 
 ### Basic usage
@@ -184,3 +175,12 @@ OnCalendar=daily
 ```
 
 See `systemd.time(7)` for schedule syntax.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) file for details.
+
+## Repository
+
+https://github.com/gms1/journalcheck
+
