@@ -1,11 +1,12 @@
 __pycache__/
+.pybuild/
 *.py[cod]
 *.egg-info/
 htmlcov/
-pkg/
-.pybuild/
 build/
 dist/
+tmp/
+repo/
 .amazonq/
 .last/
 .coverage

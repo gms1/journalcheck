@@ -51,8 +51,6 @@ sudo dpkg -i journalcheck_*.deb
 
 ### via APT Repository
 
-> NOTE: WORK IN PROGRESS!
-
 - download the public key:
 
 ```bash

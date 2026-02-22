@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-
+  workflow_dispatch:
 jobs:
   release:
     runs-on: ubuntu-24.04
@@ -31,24 +31,31 @@ jobs:
       run: |
         ./scripts/build.sh
     - name: Publish to PyPI
+      if: startsWith(github.ref, 'refs/tags/')
       uses: pypa/gh-action-pypi-publish@release/v1
     - name: Build Debian package
       run: |
         ./scripts/debian.sh
+    - name: Checkout gh-pages
+      uses: actions/checkout@v4
+      with:
+        ref: gh-pages
+        path: repo
+    - name: Build APT Repository
+      env:
+        GPG_PRIVATE_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+        GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      run: |
+        ./scripts/apt-repo.sh
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@v4
+      with:
+        folder: repo
+        branch: gh-pages
+        clean: true
     - name: Create Release
+      if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
         files: |
           dist/*
-    - name: Update APT Repository
-      uses: dev-drprasad/debian-package-repository-action@v2
-      with:
-        gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
-        gpg_passphrase: ${{ secrets.GPG_PASSPHRASE }}
-        reprepro_src: false
-        package_directory: 'dist' # directory containing the .deb package
-        repository_name: 'journalcheck'
-        branch: gh-pages
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        public_key: public.gpg
-        base_path: apt

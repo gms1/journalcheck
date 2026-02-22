@@ -6,9 +6,9 @@ cd "${DN}/.."
 export PATH=$(echo "${PATH}" | sed -e 's|/opt/hostedtoolcache/[^:]*:||g')
 
 # Get workspace root
-WORKSPACE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+WORKSPACE_ROOT="$(pwd)"
 VERSION=$(grep '^__version__ = ' "${WORKSPACE_ROOT}/src/journalcheck/__init__.py" | sed 's/__version__ = "\(.*\)"/\1/')
-PKG_DIR="${WORKSPACE_ROOT}/journalcheck-${VERSION}"
+PKG_DIR="${WORKSPACE_ROOT}/tmp/journalcheck-${VERSION}"
 DIST_DIR="${WORKSPACE_ROOT}/dist"
 
 BUILD_PACKAGES=(build-essential devscripts debhelper dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-build python3-installer)
