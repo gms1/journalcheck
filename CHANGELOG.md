@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+- if not running as service, print entries to stdout, even if other output options (e.g. email) are enabled
+- small refactorings
+
 ## [1.0.0] - 2026-02-22
 
 - first stable version

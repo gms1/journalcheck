@@ -265,6 +265,9 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     # Handle output
     output_text = "\n".join(output_lines)
 
+    if not os.getenv("JOURNALCHECK_SERVICE"):
+        print(output_text)
+
     if config.output_command:
         subprocess.run(config.output_command, shell=True, input=output_text, text=True)
 
@@ -274,10 +277,6 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
             input=output_text,
             text=True,
         )
-
-    if not config.output_command and not config.email_to:
-        if not os.getenv("JOURNALCHECK_SERVICE"):
-            print(output_text)
 
     # Save cursor
     if cursor_file and not parsed_args.test:
