@@ -24,10 +24,6 @@ PRIORITY_NUMBERS: dict[int, str] = {
     7: "debug",
 }
 
-DEFAULT_CONFIG_FILE: str = "/etc/journalcheck.yaml"
-DEFAULT_CONFIG_DIR = "/etc/journalcheck.d"
-DEFAULT_CURSOR_FILE = "/var/lib/journalcheck/cursor"
-
 
 class IdentifierConfigKeys:
     PRIORITY = "priority"
@@ -62,6 +58,9 @@ VALID_CONFIG_KEYS = {
     ConfigKeys.IDENTIFIERS,
 }
 
+DEFAULT_CONFIG_FILE: str = "/etc/journalcheck.yaml"
+DEFAULT_CONFIG_DIR = "/etc/journalcheck.d"
+DEFAULT_CURSOR_FILE = "/var/lib/journalcheck/cursor"
 
 DEFAULT_VIOLATIONS: dict[str, list[str]] = {
     "kernel": [
@@ -164,8 +163,10 @@ class IdentifierConfig:
         result: dict[str, Any] = {}
         if self.priority is not None:
             result[IdentifierConfigKeys.PRIORITY] = PRIORITY_NUMBERS[self.priority]
-        result[IdentifierConfigKeys.IGNORE] = self.ignore
-        result[IdentifierConfigKeys.VIOLATIONS] = self.violations
+        if self.ignore:
+            result[IdentifierConfigKeys.IGNORE] = self.ignore
+        if self.violations:
+            result[IdentifierConfigKeys.VIOLATIONS] = self.violations
         return result
 
 
@@ -202,7 +203,7 @@ class Config:
 
         Returns: (priority, identifier_config)
         """
-        # Check exact match first
+        # Check exact match first, so that they always have a higher priority
         if ident and ident in self.identifiers:
             ident_config = self.identifiers[ident]
             effective_priority = (
@@ -250,6 +251,11 @@ class Config:
                     f"Identifier '{ident}' must be a dict, "
                     f"got {type(ident_config).__name__}"
                 )
+
+        for ident in DEFAULT_VIOLATIONS:
+            if ident not in identifiers:
+                identifiers[ident] = IdentifierConfig.from_dict({}, identifier=ident)
+
         return cls(
             priority=priority,
             format=data.get(ConfigKeys.FORMAT, "short"),
@@ -273,19 +279,8 @@ class Config:
             result[ConfigKeys.EMAIL_TO] = self.email_to
             result[ConfigKeys.EMAIL_SUBJECT] = self.email_subject
 
-        # Add all identifiers with default violations
         result[ConfigKeys.IDENTIFIERS] = {}
-
-        # First add configured identifiers
         for ident, ident_config in self.identifiers.items():
             result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
-
-        # Then add unconfigured identifiers that have default violations
-        for ident in DEFAULT_VIOLATIONS:
-            if ident not in result[ConfigKeys.IDENTIFIERS]:
-                result[ConfigKeys.IDENTIFIERS][ident] = {
-                    IdentifierConfigKeys.IGNORE: [],
-                    IdentifierConfigKeys.VIOLATIONS: DEFAULT_VIOLATIONS[ident],
-                }
 
         return result

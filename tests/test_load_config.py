@@ -10,7 +10,6 @@ def test_load_config_default():
     config = load_config()
     assert config.priority == 6
     assert config.format == "short"
-    assert config.identifiers == {}
 
 
 def test_load_config_from_file():

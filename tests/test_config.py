@@ -1,5 +1,6 @@
 import pytest
 from journalcheck.config import (
+    DEFAULT_VIOLATIONS,
     Config,
     IdentifierConfig,
     PRIORITY_NAMES,
@@ -149,9 +150,22 @@ def test_config_to_dict():
 
 
 def test_default_violations_sshd():
-    config = Config.from_dict({ConfigKeys.IDENTIFIERS: {"sshd": {}}})
+    config = Config.from_dict(
+        {
+            ConfigKeys.IDENTIFIERS: {
+                "sshd": {},
+                "kernel": {IdentifierConfigKeys.VIOLATIONS: ["test_violation"]},
+            }
+        }
+    )
     assert len(config.identifiers["sshd"].violations) > 0
     assert any("Failed password" in v for v in config.identifiers["sshd"].violations)
+
+    assert len(config.identifiers["kernel"].violations) > 1
+    assert any("test_violation" in v for v in config.identifiers["kernel"].violations)
+
+    for ident in DEFAULT_VIOLATIONS:
+        assert len(config.identifiers[ident].violations) > 0
 
 
 def test_default_violations_with_custom():
