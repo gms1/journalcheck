@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - print to stdout even if other output options are enabled
+- display the order of the identifiers in --show-config as they are handled
 - fixed applying default violations
 - small refactorings
 
