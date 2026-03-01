@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.1] - 2026-03-01
+
 - print to stdout even if other output options are enabled
 - display the order of the identifiers in --show-config as they are handled
 - fixed applying default violations
@@ -47,7 +49,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Test suite with 95% coverage
 
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.1...HEAD
+[1.0.1]: https://github.com/gms1/journalcheck/releases/tag/v1.0.1
 [1.0.0]: https://github.com/gms1/journalcheck/releases/tag/v1.0.0
 [0.0.8]: https://github.com/gms1/journalcheck/releases/tag/v0.0.8
 [0.0.5]: https://github.com/gms1/journalcheck/releases/tag/v0.0.5
