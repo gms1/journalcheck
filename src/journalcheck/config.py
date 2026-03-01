@@ -281,6 +281,10 @@ class Config:
 
         result[ConfigKeys.IDENTIFIERS] = {}
         for ident, ident_config in self.identifiers.items():
-            result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
+            if not ident.startswith("/") or not ident.endswith("/"):
+                result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
+        for ident, ident_config in self.identifiers.items():
+            if ident.startswith("/") and ident.endswith("/"):
+                result[ConfigKeys.IDENTIFIERS][ident] = ident_config.to_dict()
 
         return result
