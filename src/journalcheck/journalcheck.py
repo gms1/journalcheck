@@ -229,20 +229,18 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
         return
 
     cursor_file: Path | None = Path(config.cursor_file) if config.cursor_file else None
-    cursor_loaded: bool = False
 
-    if cursor_file and cursor_file.exists():
-        with open(cursor_file) as f:
-            cursor: str = f.read().strip()
-            if cursor:
-                reader.seek_cursor(cursor)
-                reader.get_next()
-            cursor_loaded = True  # Mark as loaded even if empty (start from beginning)
-
-    if not cursor_loaded and config.cursor_file:
-        # If cursor file is configured but doesn't exist, seek to last 24 hours
-        since: datetime = datetime.now() - timedelta(days=1)
-        reader.seek_realtime(since)  # type: ignore[attr-defined]
+    if cursor_file:
+        if cursor_file.exists():
+            with open(cursor_file) as f:
+                cursor: str = f.read().strip()
+                if cursor:
+                    reader.seek_cursor(cursor)
+                    reader.get_next()
+        else:
+            # If cursor file is configured but doesn't exist, seek to last 24 hours
+            since: datetime = datetime.now() - timedelta(days=1)
+            reader.seek_realtime(since)  # type: ignore[attr-defined]
 
     # Collect output
     output_lines: list[str] = []

@@ -86,6 +86,43 @@ def test_run_with_cursor_file():
             sys.stdout = sys.__stdout__
 
 
+def test_run_with_not_existing_cursor_file():
+    """Test with not existing cursor file."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cursor_file = Path(tmpdir) / "cursor"
+        config_file = Path(tmpdir) / "config.yaml"
+
+        # Create config with violations and ignore patterns
+        config_data = {
+            ConfigKeys.PRIORITY: "emerg",
+            ConfigKeys.FORMAT: "short",
+            ConfigKeys.CURSOR_FILE: str(cursor_file),
+            ConfigKeys.IDENTIFIERS: {
+                "sshd": {
+                    IdentifierConfigKeys.PRIORITY: "info",
+                    IdentifierConfigKeys.IGNORE: ["Accepted publickey.*"],
+                    IdentifierConfigKeys.VIOLATIONS: ["Failed password"],
+                }
+            },
+        }
+        with open(config_file, "w") as f:
+            yaml.dump(config_data, f)
+
+        # First run - should not show outdated violations
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            reader = journal.Reader(path=str(TEST_JOURNAL_DATA_DIR_PATH))
+            run(reader, ["-c", str(config_file)])
+            first_output = captured_output.getvalue()
+
+            # Should show violation (Failed password)
+            assert "Failed password" not in first_output
+        finally:
+            sys.stdout = sys.__stdout__
+
+
 def test_run_without_cursor_file():
     """Test without cursor file - should print same lines again."""
     with tempfile.TemporaryDirectory() as tmpdir:
