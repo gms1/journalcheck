@@ -209,3 +209,51 @@ def test_default_violations_with_custom():
     assert "custom pattern" in violations
     assert any("Failed password" in v for v in violations)
     assert len(violations) > 1
+
+
+def test_config_invalid_cursor_file_type():
+    with pytest.raises(ValueError, match="cursor_file must be a string"):
+        Config.from_dict({ConfigKeys.CURSOR_FILE: 123})
+
+
+def test_config_invalid_output_command_type():
+    with pytest.raises(ValueError, match="output_command must be a string"):
+        Config.from_dict({ConfigKeys.OUTPUT_COMMAND: ["list", "not", "string"]})
+
+
+def test_config_invalid_email_to_type():
+    with pytest.raises(ValueError, match="email_to must be a string"):
+        Config.from_dict({ConfigKeys.EMAIL_TO: 123})
+
+
+def test_config_invalid_email_subject_type():
+    with pytest.raises(ValueError, match="email_subject must be a string"):
+        Config.from_dict({ConfigKeys.EMAIL_SUBJECT: True})
+
+
+def test_identifier_config_invalid_priority_string():
+    with pytest.raises(
+        ValueError, match="Unknown priority 'invalid' for identifier 'test'"
+    ):
+        IdentifierConfig.from_dict(
+            {IdentifierConfigKeys.PRIORITY: "invalid"}, identifier="test"
+        )
+
+
+def test_identifier_config_invalid_ignore_item_type():
+    with pytest.raises(
+        ValueError, match="All ignore patterns must be strings for identifier 'test'"
+    ):
+        IdentifierConfig.from_dict(
+            {IdentifierConfigKeys.IGNORE: ["valid", 123, "another"]}, identifier="test"
+        )
+
+
+def test_identifier_config_invalid_violations_item_type():
+    with pytest.raises(
+        ValueError, match="All violations must be strings for identifier 'test'"
+    ):
+        IdentifierConfig.from_dict(
+            {IdentifierConfigKeys.VIOLATIONS: ["valid", None, "another"]},
+            identifier="test",
+        )

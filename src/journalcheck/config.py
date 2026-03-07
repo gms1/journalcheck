@@ -151,20 +151,34 @@ class IdentifierConfig:
             )
 
         priority = data.get(IdentifierConfigKeys.PRIORITY)
-        if priority is not None and isinstance(priority, str):
-            priority = PRIORITY_NAMES.get(priority.lower())
+        if priority is not None:
+            if isinstance(priority, str):
+                priority_input = priority
+                priority = PRIORITY_NAMES.get(priority.lower())
+                if priority is None:
+                    raise ValueError(
+                        f"Unknown priority '{priority_input}' for identifier '{identifier}'"
+                    )
 
         # Start with default violations for this identifier
         violations: list[str] = list(DEFAULT_VIOLATIONS.get(identifier, []))
         # Append user-configured violations
-        if data.get(IdentifierConfigKeys.VIOLATIONS):
-            violations.extend(
-                cast(list[str], data.get(IdentifierConfigKeys.VIOLATIONS))
-            )
+        user_violations = data.get(IdentifierConfigKeys.VIOLATIONS)
+        if user_violations:
+            if not all(isinstance(v, str) for v in user_violations):
+                raise ValueError(
+                    f"All violations must be strings for identifier '{identifier}'"
+                )
+            violations.extend(cast(list[str], user_violations))
 
         ignore = data.get(IdentifierConfigKeys.IGNORE)
         if not ignore:
             ignore = []
+        else:
+            if not all(isinstance(i, str) for i in ignore):
+                raise ValueError(
+                    f"All ignore patterns must be strings for identifier '{identifier}'"
+                )
 
         return cls(
             priority=priority,
@@ -264,6 +278,31 @@ class Config:
                     f"Format must be one of: {OutputFormat.to_str()}, got {format}, "
                 )
 
+        # Validate string fields
+        cursor_file = data.get(ConfigKeys.CURSOR_FILE)
+        if cursor_file is not None and not isinstance(cursor_file, str):
+            raise ValueError(
+                f"cursor_file must be a string, got {type(cursor_file).__name__}"
+            )
+
+        output_command = data.get(ConfigKeys.OUTPUT_COMMAND)
+        if output_command is not None and not isinstance(output_command, str):
+            raise ValueError(
+                f"output_command must be a string, got {type(output_command).__name__}"
+            )
+
+        email_to = data.get(ConfigKeys.EMAIL_TO)
+        if email_to is not None and not isinstance(email_to, str):
+            raise ValueError(
+                f"email_to must be a string, got {type(email_to).__name__}"
+            )
+
+        email_subject = data.get(ConfigKeys.EMAIL_SUBJECT)
+        if email_subject is not None and not isinstance(email_subject, str):
+            raise ValueError(
+                f"email_subject must be a string, got {type(email_subject).__name__}"
+            )
+
         identifiers: dict[str, IdentifierConfig] = {}
         for ident, ident_config in data.get(ConfigKeys.IDENTIFIERS, {}).items():
             if not isinstance(ident_config, dict):
@@ -282,10 +321,10 @@ class Config:
         return cls(
             priority=priority,
             format=data.get(ConfigKeys.FORMAT, OutputFormat.SHORT),
-            cursor_file=data.get(ConfigKeys.CURSOR_FILE),
-            output_command=data.get(ConfigKeys.OUTPUT_COMMAND),
-            email_to=data.get(ConfigKeys.EMAIL_TO),
-            email_subject=data.get(ConfigKeys.EMAIL_SUBJECT),
+            cursor_file=cursor_file,
+            output_command=output_command,
+            email_to=email_to,
+            email_subject=email_subject,
             identifiers=identifiers,
         )
 
