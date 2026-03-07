@@ -47,6 +47,20 @@ class Severity:
 
 
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
+    """Merge a loaded configuration into existing configuration data.
+
+    Scalar values are overwritten, while identifier ignore/violations lists are appended.
+
+    Args:
+        data: Existing configuration data to merge into
+        loaded: New configuration data to merge from
+
+    Returns:
+        The merged configuration dictionary
+
+    Raises:
+        ValueError: If unknown configuration keys are found
+    """
     unknown_keys = set(loaded.keys()) - VALID_CONFIG_KEYS
     if unknown_keys:
         raise ValueError(f"Unknown keys in config: {', '.join(sorted(unknown_keys))}")
@@ -94,6 +108,25 @@ def load_config(
     priority_param: Optional[int] = None,
     output_format_param: Optional[str] = None,
 ) -> Config:
+    """Load and merge configuration from file(s) and command-line parameters.
+
+    Configuration is loaded from:
+    1. Main config file (default: /etc/journalcheck.yaml)
+    2. Config directory files (default: /etc/journalcheck.d/*.yaml, sorted)
+    3. Command-line parameter overrides
+
+    Args:
+        config_file_param: Optional path to main config file (overrides default)
+        priority_param: Optional priority level override from command line
+        output_format_param: Optional output format override from command line
+
+    Returns:
+        Merged Config object
+
+    Raises:
+        FileNotFoundError: If specified config file doesn't exist
+        ValueError: If configuration is invalid
+    """
     config_file = Path(DEFAULT_CONFIG_FILE)
     config_dir: Path | None = Path(DEFAULT_CONFIG_DIR)
 
@@ -138,12 +171,32 @@ def load_config(
 
 
 def get_identifier(entry: dict[str, Any]) -> str:
+    """Extract the identifier from a journal entry.
+
+    Returns SYSLOG_IDENTIFIER if present, otherwise _COMM, otherwise empty string.
+
+    Args:
+        entry: Journal entry dictionary
+
+    Returns:
+        Identifier string
+    """
     syslog_id: Optional[str] = entry.get(JournalFields.SYSLOG_IDENTIFIER)
     comm: Optional[str] = entry.get(JournalFields.COMM)
     return syslog_id if syslog_id else comm if comm else ""
 
 
 def format_identifier_with_pid(entry: dict[str, Any]) -> str:
+    """Format identifier with PID for display.
+
+    Formats as "identifier[pid]" or "(comm)[pid]" depending on what's available.
+
+    Args:
+        entry: Journal entry dictionary
+
+    Returns:
+        Formatted identifier string with PID
+    """
     syslog_id: Optional[str] = entry.get(JournalFields.SYSLOG_IDENTIFIER)
     comm: Optional[str] = entry.get(JournalFields.COMM)
     pid: Any = entry.get(JournalFields.PID)
@@ -162,6 +215,22 @@ def format_identifier_with_pid(entry: dict[str, Any]) -> str:
 
 
 def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]:
+    """Determine if a journal entry should be shown based on configuration.
+
+    Decision logic:
+    1. Violation patterns always match (highest priority)
+    2. Priority filtering (entry priority must be <= configured priority)
+    3. Ignore patterns suppress matching messages (lowest priority)
+
+    Args:
+        entry: Journal entry dictionary
+        config: Configuration object
+
+    Returns:
+        Tuple of (should_show, severity_marker)
+        - should_show: True if entry should be displayed
+        - severity_marker: "VIOLATION" if matched violation pattern, else ""
+    """
     ident: str = get_identifier(entry)
     priority: int = entry.get(JournalFields.PRIORITY, 6)
     message: str = entry.get(JournalFields.MESSAGE, "")
@@ -189,6 +258,16 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
 def format_entry(
     entry: dict[str, Any], format_type: OutputFormat, severity: str = ""
 ) -> str:
+    """Format a journal entry for output.
+
+    Args:
+        entry: Journal entry dictionary
+        format_type: Output format (SHORT or JSON)
+        severity: Optional severity marker (e.g., "VIOLATION")
+
+    Returns:
+        Formatted entry string
+    """
     if format_type == OutputFormat.JSON:
         result: dict[str, Any] = dict(entry)
         if severity:
@@ -209,7 +288,15 @@ def format_entry(
         return f"{ts_str} {hostname} {ident}{severity_marker}: {message}"
 
 
-def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+def _parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
+    """Parse command-line arguments.
+
+    Args:
+        args: Optional argument list (defaults to sys.argv)
+
+    Returns:
+        Parsed arguments namespace
+    """
     parser: argparse.ArgumentParser = argparse.ArgumentParser()
     parser.add_argument("-c", "--config", help="Config file path")
     parser.add_argument("-p", "--priority", type=int, help="Priority level")
@@ -254,7 +341,22 @@ def save_cursor(cursor_file: Path, entry: dict[str, Any]) -> None:
 
 
 def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
-    parsed_args: argparse.Namespace = parse_args(args)
+    """Main execution logic for processing journal entries.
+
+    Loads configuration, processes journal entries according to filters,
+    and outputs results via configured methods (stdout, command, email).
+
+    Note: Reboot detection only works in SHORT output format.
+
+    Args:
+        reader: systemd journal reader instance
+        args: Optional command-line arguments
+
+    Raises:
+        OSError: If cursor file cannot be saved
+        ValueError: If configuration is invalid
+    """
+    parsed_args: argparse.Namespace = _parse_args(args)
     config: Config = load_config(
         config_file_param=parsed_args.config,
         priority_param=parsed_args.priority,
@@ -325,6 +427,14 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
 
 def main() -> None:
+    """Entry point for journalcheck command.
+
+    Handles top-level exception catching and exit codes.
+
+    Exit codes:
+        0: Success
+        1: Error (configuration, file not found, OS error, or unexpected error)
+    """
     try:
         run(journal.Reader())
     except yaml.YAMLError as e:

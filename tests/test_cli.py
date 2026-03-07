@@ -1,6 +1,6 @@
 import tempfile
 import yaml
-from journalcheck.journalcheck import run, parse_args, load_config
+from journalcheck.journalcheck import run, _parse_args, load_config
 from journalcheck.config import ConfigKeys, IdentifierConfigKeys, OutputFormat
 from systemd import journal
 from pathlib import Path

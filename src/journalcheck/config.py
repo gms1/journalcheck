@@ -107,6 +107,13 @@ DEFAULT_VIOLATIONS: dict[str, list[str]] = {
 
 @dataclass
 class IdentifierConfig:
+    """Configuration for a specific journal identifier (service/process).
+
+    Attributes:
+        priority: Optional priority threshold (0-7). If None, uses global priority.
+        ignore: List of regex patterns to suppress (must match entire message).
+        violations: List of regex patterns that always show (substring match).
+    """
     priority: int | None = None
     ignore: list[str] = field(default_factory=list)
     violations: list[str] = field(default_factory=list)
@@ -144,6 +151,18 @@ class IdentifierConfig:
     def from_dict(
         cls, data: dict[str, Any], identifier: str = ""
     ) -> "IdentifierConfig":
+        """Create IdentifierConfig from dictionary data.
+
+        Args:
+            data: Configuration dictionary
+            identifier: Identifier name (for error messages and default violations)
+
+        Returns:
+            IdentifierConfig instance
+
+        Raises:
+            ValueError: If configuration is invalid
+        """
         unknown_keys = set(data.keys()) - VALID_IDENTIFIER_CONFIG_KEYS
         if unknown_keys:
             raise ValueError(
@@ -187,6 +206,11 @@ class IdentifierConfig:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert IdentifierConfig to dictionary representation.
+
+        Returns:
+            Dictionary with priority (as name), ignore, and violations
+        """
         result: dict[str, Any] = {}
         if self.priority is not None:
             result[IdentifierConfigKeys.PRIORITY] = PRIORITY_NUMBERS[self.priority]
@@ -199,6 +223,17 @@ class IdentifierConfig:
 
 @dataclass
 class Config:
+    """Main configuration for journalcheck.
+
+    Attributes:
+        priority: Global priority threshold (0-7, default: 6=info)
+        format: Output format (SHORT or JSON)
+        cursor_file: Path to cursor file for tracking position
+        output_command: Shell command to pipe output to
+        email_to: Email address to send output to
+        email_subject: Subject line for email notifications
+        identifiers: Per-identifier configuration overrides
+    """
     priority: int = 6
     format: OutputFormat = OutputFormat.SHORT
     cursor_file: str | None = None
@@ -227,7 +262,13 @@ class Config:
     def get_config_for_identifier(self, ident: str) -> tuple[int, IdentifierConfig]:
         """Get effective priority and config for an identifier.
 
-        Returns: (priority, identifier_config)
+        Checks exact matches first, then regex patterns, then returns default.
+
+        Args:
+            ident: Identifier string to look up
+
+        Returns:
+            Tuple of (effective_priority, identifier_config)
         """
         # Check exact match first, so that they always have a higher priority
         if ident and ident in self.identifiers:
@@ -256,6 +297,19 @@ class Config:
 
     @classmethod
     def from_dict(cls, data: dict[str, Any]) -> "Config":
+        """Create Config from dictionary data.
+
+        Validates all configuration fields and creates Config instance.
+
+        Args:
+            data: Configuration dictionary from YAML
+
+        Returns:
+            Config instance
+
+        Raises:
+            ValueError: If configuration is invalid
+        """
         unknown_keys = set(data.keys()) - VALID_CONFIG_KEYS
         if unknown_keys:
             raise ValueError(
@@ -329,6 +383,13 @@ class Config:
         )
 
     def to_dict(self) -> dict[str, Any]:
+        """Convert Config to dictionary representation.
+
+        Returns regular identifiers first, then regex identifiers.
+
+        Returns:
+            Dictionary suitable for YAML serialization
+        """
         result: dict[str, Any] = {
             ConfigKeys.PRIORITY: PRIORITY_NUMBERS[self.priority],
             ConfigKeys.FORMAT: self.format,
