@@ -114,6 +114,7 @@ class IdentifierConfig:
         ignore: List of regex patterns to suppress (must match entire message).
         violations: List of regex patterns that always show (substring match).
     """
+
     priority: int | None = None
     ignore: list[str] = field(default_factory=list)
     violations: list[str] = field(default_factory=list)
@@ -176,7 +177,8 @@ class IdentifierConfig:
                 priority = PRIORITY_NAMES.get(priority.lower())
                 if priority is None:
                     raise ValueError(
-                        f"Unknown priority '{priority_input}' for identifier '{identifier}'"
+                        f"Unknown priority '{priority_input}' "
+                        f"for identifier '{identifier}'"
                     )
 
         # Start with default violations for this identifier
@@ -234,6 +236,7 @@ class Config:
         email_subject: Subject line for email notifications
         identifiers: Per-identifier configuration overrides
     """
+
     priority: int = 6
     format: OutputFormat = OutputFormat.SHORT
     cursor_file: str | None = None

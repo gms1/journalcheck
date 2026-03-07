@@ -49,7 +49,8 @@ class Severity:
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
     """Merge a loaded configuration into existing configuration data.
 
-    Scalar values are overwritten, while identifier ignore/violations lists are appended.
+    Scalar values are overwritten, while identifier ignore/violations
+    lists are appended.
 
     Args:
         data: Existing configuration data to merge into
