@@ -106,6 +106,9 @@ identifiers:
     ignore:
       - ".*session opened.*"
       - ".*session closed.*"
+  /^.*$/: # Any other identifier
+    violations:
+    - (error|failed)
 ```
 
 **Output Options:**
