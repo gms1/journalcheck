@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+from __future__ import annotations
+
 import sys
 import traceback
 from systemd import journal
@@ -22,6 +24,9 @@ from .config import (
     IdentifierConfigKeys,
     OutputFormat,
 )
+
+# Environment variable set by systemd service to suppress stdout
+ENV_JOURNALCHECK_SERVICE = "JOURNALCHECK_SERVICE"
 
 
 class JournalFields:
@@ -267,7 +272,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     # Handle output
     output_text = "\n".join(output_lines)
 
-    if not os.getenv("JOURNALCHECK_SERVICE"):
+    if not os.getenv(ENV_JOURNALCHECK_SERVICE):
         print(output_text)
 
     if config.output_command:
