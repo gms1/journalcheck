@@ -8,7 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 - improved configuration validation
-- fixed unbound exception if no entries were processed.
+- fixed unbound exception if no entries were processed
+- improved error handling for writing to cursor file
 - small refactoring
 
 ## [1.0.1] - 2026-03-01

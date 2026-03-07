@@ -225,6 +225,34 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     return parser.parse_args(args)
 
 
+def save_cursor(cursor_file: Path, entry: dict[str, Any]) -> None:
+    """Save the journal cursor to a file for tracking position.
+
+    Args:
+        cursor_file: Path where the cursor should be saved
+        entry: Journal entry containing the cursor
+
+    Raises:
+        OSError: If cursor file cannot be created or written
+    """
+    last_cursor: Any = entry.get(JournalFields.CURSOR)
+    if not last_cursor:
+        return
+
+    try:
+        cursor_file.parent.mkdir(parents=True, exist_ok=True)
+    except OSError as e:
+        raise OSError(
+            f"Failed to create cursor directory {cursor_file.parent}: {e}"
+        ) from e
+
+    try:
+        with open(cursor_file, "w") as f:
+            f.write(str(last_cursor))
+    except OSError as e:
+        raise OSError(f"Failed to write cursor file {cursor_file}: {e}") from e
+
+
 def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     parsed_args: argparse.Namespace = parse_args(args)
     config: Config = load_config(
@@ -293,11 +321,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
     # Save cursor
     if cursor_file and not parsed_args.test and entry:
-        last_cursor: Any = entry.get(JournalFields.CURSOR)
-        if last_cursor:
-            cursor_file.parent.mkdir(parents=True, exist_ok=True)
-            with open(cursor_file, "w") as f:
-                f.write(str(last_cursor))
+        save_cursor(cursor_file, entry)
 
 
 def main() -> None:
@@ -307,7 +331,7 @@ def main() -> None:
         print(f"Error parsing the configuration: {e}", file=sys.stderr)
         sys.exit(1)
 
-    except (ValueError, FileNotFoundError) as e:
+    except (ValueError, FileNotFoundError, OSError) as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
 
