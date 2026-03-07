@@ -1,7 +1,7 @@
-## [1.0.1] - 2026-03-01
+## [1.0.2] - 2026-03-07
 
-- print to stdout even if other output options are enabled
-- display the order of the identifiers in --show-config as they are handled
-- fixed applying default violations
-- small refactorings
+- improved configuration validation
+- fixed unbound exception if no entries were processed
+- improved error handling for writing to cursor file
+- small refactoring
 

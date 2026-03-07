@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.2] - 2026-03-07
+
 - improved configuration validation
 - fixed unbound exception if no entries were processed
 - improved error handling for writing to cursor file
@@ -54,7 +56,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Test suite with 95% coverage
 
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.2...HEAD
+[1.0.2]: https://github.com/gms1/journalcheck/releases/tag/v1.0.2
 [1.0.1]: https://github.com/gms1/journalcheck/releases/tag/v1.0.1
 [1.0.0]: https://github.com/gms1/journalcheck/releases/tag/v1.0.0
 [0.0.8]: https://github.com/gms1/journalcheck/releases/tag/v0.0.8
