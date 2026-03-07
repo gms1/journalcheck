@@ -154,6 +154,30 @@ def test_config_to_dict():
     ]
 
 
+def test_config_to_dict_with_regex_identifier():
+    config = Config(
+        priority=6,
+        identifiers={
+            "ssh": IdentifierConfig(priority=4),
+            "/^systemd.*/": IdentifierConfig(priority=3, ignore=["test"]),
+        },
+    )
+    result = config.to_dict()
+    assert "ssh" in result[ConfigKeys.IDENTIFIERS]
+    assert "/^systemd.*/" in result[ConfigKeys.IDENTIFIERS]
+    assert (
+        result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.PRIORITY]
+        == "warning"
+    )
+    assert (
+        result[ConfigKeys.IDENTIFIERS]["/^systemd.*/"][IdentifierConfigKeys.PRIORITY]
+        == "err"
+    )
+    assert result[ConfigKeys.IDENTIFIERS]["/^systemd.*/"][
+        IdentifierConfigKeys.IGNORE
+    ] == ["test"]
+
+
 def test_default_violations_sshd():
     config = Config.from_dict(
         {
