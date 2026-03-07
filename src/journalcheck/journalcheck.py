@@ -254,6 +254,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     # Collect output
     output_lines: list[str] = []
     last_boot_id: str | None = None
+    entry: dict[str, Any] | None = None
     for entry in reader:
         show, severity = should_show_entry(entry, config)
         if show:
@@ -291,7 +292,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
         )
 
     # Save cursor
-    if cursor_file and not parsed_args.test:
+    if cursor_file and not parsed_args.test and entry:
         last_cursor: Any = entry.get(JournalFields.CURSOR)
         if last_cursor:
             cursor_file.parent.mkdir(parents=True, exist_ok=True)
