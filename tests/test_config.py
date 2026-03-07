@@ -6,6 +6,7 @@ from journalcheck.config import (
     PRIORITY_NAMES,
     ConfigKeys,
     IdentifierConfigKeys,
+    OutputFormat,
 )
 
 
@@ -48,12 +49,6 @@ def test_config_invalid_priority():
     with pytest.raises(ValueError, match="Priority must be 0-7"):
         Config(priority=8)
 
-
-def test_config_invalid_format():
-    with pytest.raises(ValueError, match="Format must be"):
-        Config(format="invalid")
-
-
 def test_config_invalid_identifier_priority():
     with pytest.raises(ValueError, match="Priority must be 0-7"):
         Config(identifiers={"test": IdentifierConfig(priority=10)})
@@ -79,7 +74,7 @@ def test_identifier_config_from_dict():
 def test_config_from_dict():
     data = {
         ConfigKeys.PRIORITY: "err",
-        ConfigKeys.FORMAT: "json",
+        ConfigKeys.FORMAT: OutputFormat.JSON,
         ConfigKeys.IDENTIFIERS: {
             "ssh": {
                 IdentifierConfigKeys.PRIORITY: 6,
@@ -90,7 +85,7 @@ def test_config_from_dict():
     }
     config = Config.from_dict(data)
     assert config.priority == 3
-    assert config.format == "json"
+    assert config.format == OutputFormat.JSON
     assert isinstance(config.identifiers["ssh"], IdentifierConfig)
     assert config.identifiers["ssh"].priority == 6
     assert isinstance(config.identifiers["kernel"], IdentifierConfig)
@@ -100,6 +95,16 @@ def test_config_from_dict():
 def test_config_unknown_key():
     with pytest.raises(ValueError, match="Unknown keys in config: unknown_key"):
         Config.from_dict({ConfigKeys.PRIORITY: 6, "unknown_key": "value"})
+
+
+def test_config_unknown_priority():
+    with pytest.raises(ValueError, match="Unknown priority"):
+        Config.from_dict({"priority": "invalid"})
+
+
+def test_config_invalid_format():
+    with pytest.raises(ValueError, match="Format must be"):
+        Config.from_dict({"format": "invalid"})
 
 
 def test_identifier_config_unknown_key():
@@ -129,7 +134,7 @@ def test_identifier_config_to_dict():
 def test_config_to_dict():
     config = Config(
         priority=3,
-        format="json",
+        format=OutputFormat.JSON,
         cursor_file="/tmp/cursor",
         output_command="echo test",
         email_to="admin@example.com",
@@ -138,7 +143,7 @@ def test_config_to_dict():
     )
     result = config.to_dict()
     assert result[ConfigKeys.PRIORITY] == "err"
-    assert result[ConfigKeys.FORMAT] == "json"
+    assert result[ConfigKeys.FORMAT] == OutputFormat.JSON
     assert result[ConfigKeys.CURSOR_FILE] == "/tmp/cursor"
     assert result[ConfigKeys.OUTPUT_COMMAND] == "echo test"
     assert result[ConfigKeys.EMAIL_TO] == "admin@example.com"

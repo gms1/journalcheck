@@ -4,7 +4,7 @@ import io
 import sys
 from pathlib import Path
 from journalcheck.journalcheck import run, JournalFields
-from journalcheck.config import ConfigKeys
+from journalcheck.config import ConfigKeys, OutputFormat
 from systemd import journal
 
 
@@ -44,7 +44,7 @@ def test_reboot_marker_inserted_on_boot_id_change():
         config_file = Path(tmpdir) / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump(
-                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: "short"}, f
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
             )
 
         # Create mock entries with different boot IDs
@@ -100,7 +100,7 @@ def test_no_reboot_marker_for_json_format():
         config_file = Path(tmpdir) / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump(
-                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: "json"}, f
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.JSON.value}, f
             )
 
         # Create mock entries with different boot IDs
@@ -142,7 +142,7 @@ def test_no_reboot_marker_at_start():
         config_file = Path(tmpdir) / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump(
-                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: "short"}, f
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
             )
 
         # Create mock entries where first entry has different boot ID
@@ -179,7 +179,7 @@ def test_multiple_reboots():
         config_file = Path(tmpdir) / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump(
-                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: "short"}, f
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
             )
 
         # Create mock entries with multiple boot ID changes
@@ -231,7 +231,7 @@ def test_reboot_marker_tracks_all_entries():
         config_file = Path(tmpdir) / "config.yaml"
         with open(config_file, "w") as f:
             yaml.dump(
-                {ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: "short"}, f
+                {ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
             )
 
         # Create mock entries where middle entry is filtered out

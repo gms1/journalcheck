@@ -1,7 +1,7 @@
 import tempfile
 import yaml
 from journalcheck.journalcheck import run, parse_args, load_config
-from journalcheck.config import ConfigKeys, IdentifierConfigKeys
+from journalcheck.config import ConfigKeys, IdentifierConfigKeys, OutputFormat
 from systemd import journal
 from pathlib import Path
 import io
@@ -40,7 +40,7 @@ def test_run_with_cursor_file():
         # Create config with violations and ignore patterns
         config_data = {
             ConfigKeys.PRIORITY: "emerg",
-            ConfigKeys.FORMAT: "short",
+            ConfigKeys.FORMAT: OutputFormat.SHORT.value,
             ConfigKeys.CURSOR_FILE: str(cursor_file),
             ConfigKeys.IDENTIFIERS: {
                 "sshd": {
@@ -95,7 +95,7 @@ def test_run_with_not_existing_cursor_file():
         # Create config with violations and ignore patterns
         config_data = {
             ConfigKeys.PRIORITY: "emerg",
-            ConfigKeys.FORMAT: "short",
+            ConfigKeys.FORMAT: OutputFormat.SHORT.value,
             ConfigKeys.CURSOR_FILE: str(cursor_file),
             ConfigKeys.IDENTIFIERS: {
                 "sshd": {
@@ -131,7 +131,7 @@ def test_run_without_cursor_file():
         # Create config with violations and ignore patterns
         config_data = {
             ConfigKeys.PRIORITY: "emerg",
-            ConfigKeys.FORMAT: "short",
+            ConfigKeys.FORMAT: OutputFormat.SHORT.value,
             ConfigKeys.CURSOR_FILE: None,
             ConfigKeys.IDENTIFIERS: {
                 "sshd": {

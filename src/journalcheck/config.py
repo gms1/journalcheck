@@ -1,5 +1,6 @@
 import re
 from dataclasses import dataclass, field
+from enum import StrEnum
 from typing import Any, cast
 
 PRIORITY_NAMES: dict[str, int] = {
@@ -23,6 +24,15 @@ PRIORITY_NUMBERS: dict[int, str] = {
     6: "info",
     7: "debug",
 }
+
+
+class OutputFormat(StrEnum):
+    SHORT = "short"
+    JSON = "json"
+
+    @classmethod
+    def to_str(cls) -> str:
+        return " ".join(f"'{fmt}'" for fmt in OutputFormat)
 
 
 class IdentifierConfigKeys:
@@ -61,6 +71,7 @@ VALID_CONFIG_KEYS = {
 DEFAULT_CONFIG_FILE: str = "/etc/journalcheck.yaml"
 DEFAULT_CONFIG_DIR = "/etc/journalcheck.d"
 DEFAULT_CURSOR_FILE = "/var/lib/journalcheck/cursor"
+DEFAULT_EMAIL_SUBJECT = "Journal Alerts"
 
 DEFAULT_VIOLATIONS: dict[str, list[str]] = {
     "kernel": [
@@ -173,11 +184,11 @@ class IdentifierConfig:
 @dataclass
 class Config:
     priority: int = 6
-    format: str = "short"
+    format: OutputFormat = OutputFormat.SHORT
     cursor_file: str | None = None
     output_command: str | None = None
     email_to: str | None = None
-    email_subject: str = "Journal Alerts"
+    email_subject: str | None = None
     identifiers: dict[str, IdentifierConfig] = field(default_factory=dict)
     _compiled_identifier_patterns: list[tuple[re.Pattern[str], IdentifierConfig]] = (
         field(default_factory=list, init=False, repr=False)
@@ -186,8 +197,7 @@ class Config:
     def __post_init__(self):
         if not 0 <= self.priority <= 7:
             raise ValueError(f"Priority must be 0-7, got {self.priority}")
-        if self.format not in ["short", "json"]:
-            raise ValueError(f"Format must be 'short' or 'json', got '{self.format}'")
+
         # Compile regex identifier patterns once
         self._compiled_identifier_patterns = []
         for ident, ident_config in self.identifiers.items():
@@ -238,19 +248,30 @@ class Config:
 
         priority = data.get(ConfigKeys.PRIORITY, 6)
         if isinstance(priority, str):
-            priority = PRIORITY_NAMES.get(priority.lower(), 6)
+            priority_input = priority
+            priority = PRIORITY_NAMES.get(priority.lower())
+            if priority is None:
+                raise ValueError(f"Unknown priority {priority_input}")
+
+        format = data.get(ConfigKeys.FORMAT)
+        if isinstance(format, str):
+            try:
+                OutputFormat(format)
+            except ValueError:
+                raise ValueError(
+                    f"Format must be one of: {OutputFormat.to_str()}, got {format}, "
+                )
 
         identifiers: dict[str, IdentifierConfig] = {}
         for ident, ident_config in data.get(ConfigKeys.IDENTIFIERS, {}).items():
-            if isinstance(ident_config, dict):
-                identifiers[ident] = IdentifierConfig.from_dict(
-                    ident_config, identifier=ident
-                )
-            else:
+            if not isinstance(ident_config, dict):
                 raise ValueError(
                     f"Identifier '{ident}' must be a dict, "
                     f"got {type(ident_config).__name__}"
                 )
+            identifiers[ident] = IdentifierConfig.from_dict(
+                ident_config, identifier=ident
+            )
 
         for ident in DEFAULT_VIOLATIONS:
             if ident not in identifiers:
@@ -258,11 +279,11 @@ class Config:
 
         return cls(
             priority=priority,
-            format=data.get(ConfigKeys.FORMAT, "short"),
+            format=data.get(ConfigKeys.FORMAT, OutputFormat.SHORT),
             cursor_file=data.get(ConfigKeys.CURSOR_FILE),
             output_command=data.get(ConfigKeys.OUTPUT_COMMAND),
             email_to=data.get(ConfigKeys.EMAIL_TO),
-            email_subject=data.get(ConfigKeys.EMAIL_SUBJECT, "Journal Alerts"),
+            email_subject=data.get(ConfigKeys.EMAIL_SUBJECT),
             identifiers=identifiers,
         )
 
@@ -277,6 +298,7 @@ class Config:
             result[ConfigKeys.OUTPUT_COMMAND] = self.output_command
         if self.email_to:
             result[ConfigKeys.EMAIL_TO] = self.email_to
+        if self.email_subject:
             result[ConfigKeys.EMAIL_SUBJECT] = self.email_subject
 
         result[ConfigKeys.IDENTIFIERS] = {}

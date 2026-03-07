@@ -15,10 +15,12 @@ from .config import (
     DEFAULT_CONFIG_FILE,
     DEFAULT_CONFIG_DIR,
     DEFAULT_CURSOR_FILE,
+    DEFAULT_EMAIL_SUBJECT,
     VALID_CONFIG_KEYS,
     Config,
     ConfigKeys,
     IdentifierConfigKeys,
+    OutputFormat,
 )
 
 
@@ -179,8 +181,10 @@ def should_show_entry(entry: dict[str, Any], config: Config) -> tuple[bool, str]
     return True, ""
 
 
-def format_entry(entry: dict[str, Any], format_type: str, severity: str = "") -> str:
-    if format_type == "json":
+def format_entry(
+    entry: dict[str, Any], format_type: OutputFormat, severity: str = ""
+) -> str:
+    if format_type == OutputFormat.JSON:
         result: dict[str, Any] = dict(entry)
         if severity:
             result[JournalFields.SEVERITY] = severity
@@ -205,7 +209,7 @@ def parse_args(args: Optional[list[str]] = None) -> argparse.Namespace:
     parser.add_argument("-c", "--config", help="Config file path")
     parser.add_argument("-p", "--priority", type=int, help="Priority level")
     parser.add_argument(
-        "-o", "--output", choices=["short", "json"], help="Output format"
+        "-o", "--output", choices=list(OutputFormat), help="Output format"
     )
     parser.add_argument(
         "-t", "--test", action="store_true", help="Test mode: do not update cursor file"
@@ -248,8 +252,8 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     for entry in reader:
         show, severity = should_show_entry(entry, config)
         if show:
-            # Check for reboot (only for non-json format)
-            if config.format != "json":
+            # Check for reboot
+            if config.format == OutputFormat.SHORT:
                 this_boot_id = entry.get(JournalFields.BOOT_ID)
                 if last_boot_id and this_boot_id and this_boot_id != last_boot_id:
                     output_lines.append("-- Reboot --")
@@ -271,7 +275,12 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
     if config.email_to:
         subprocess.run(
-            ["mail", "-s", config.email_subject, config.email_to],
+            [
+                "mail",
+                "-s",
+                config.email_subject if config.email_subject else DEFAULT_EMAIL_SUBJECT,
+                config.email_to,
+            ],
             input=output_text,
             text=True,
         )

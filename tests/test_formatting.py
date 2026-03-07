@@ -1,4 +1,5 @@
 from datetime import datetime
+from journalcheck.config import OutputFormat
 from journalcheck.journalcheck import (
     Severity,
     format_entry,
@@ -45,7 +46,7 @@ def test_format_identifier_with_pid_no_syslog_no_comm():
 
 def test_format_entry_json():
     entry = {JournalFields.MESSAGE: "test", JournalFields.HOSTNAME: "host"}
-    result = format_entry(entry, "json", Severity.VIOLATION)
+    result = format_entry(entry, OutputFormat.JSON, Severity.VIOLATION)
     assert "test" in result
     assert "host" in result
     assert Severity.VIOLATION in result
@@ -58,7 +59,7 @@ def test_format_entry_short():
         JournalFields.SYSLOG_IDENTIFIER: "testapp",
         JournalFields.MESSAGE: "test message",
     }
-    result = format_entry(entry, "short")
+    result = format_entry(entry, OutputFormat.SHORT)
     assert "testhost" in result
     assert "testapp" in result
     assert "test message" in result
@@ -72,7 +73,7 @@ def test_format_entry_with_pid():
         JournalFields.PID: 1234,
         JournalFields.MESSAGE: "test message",
     }
-    result = format_entry(entry, "short")
+    result = format_entry(entry, OutputFormat.SHORT)
     assert "4321" in result
     assert "testapp[1234]" in result
 
@@ -83,5 +84,5 @@ def test_format_entry_without_timestamp():
         JournalFields.SYSLOG_IDENTIFIER: "testapp",
         JournalFields.MESSAGE: "test message",
     }
-    result = format_entry(entry, "short")
+    result = format_entry(entry, OutputFormat.SHORT)
     assert datetime.now().strftime("%b %d") in result

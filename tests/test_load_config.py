@@ -3,32 +3,40 @@ import pytest
 import yaml
 from pathlib import Path
 from journalcheck.journalcheck import load_config
-from journalcheck.config import Config, ConfigKeys, IdentifierConfig, IdentifierConfigKeys
+from journalcheck.config import (
+    Config,
+    ConfigKeys,
+    IdentifierConfig,
+    IdentifierConfigKeys,
+    OutputFormat,
+)
 
 
 def test_load_config_default():
     config = load_config()
     assert config.priority == 6
-    assert config.format == "short"
+    assert config.format == OutputFormat.SHORT
 
 
 def test_load_config_from_file():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        yaml.dump({ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: "json"}, f)
+        yaml.dump(
+            {ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: OutputFormat.JSON.value}, f
+        )
         config_file = f.name
 
     try:
         config = load_config(config_file)
         assert config.priority == 3
-        assert config.format == "json"
+        assert config.format == OutputFormat.JSON
     finally:
         Path(config_file).unlink()
 
 
 def test_load_config_with_args():
-    config = load_config(priority_param=4, output_format_param="json")
+    config = load_config(priority_param=4, output_format_param=OutputFormat.JSON.value)
     assert config.priority == 4
-    assert config.format == "json"
+    assert config.format == OutputFormat.JSON
 
 
 def test_load_config_with_empty_identifiers():
@@ -295,7 +303,7 @@ def test_load_config_merge_overrides():
             yaml.dump(
                 {
                     ConfigKeys.PRIORITY: 6,
-                    ConfigKeys.FORMAT: "short",
+                    ConfigKeys.FORMAT: OutputFormat.SHORT.value,
                     ConfigKeys.CURSOR_FILE: "/tmp/cursor1",
                 },
                 f,
@@ -309,7 +317,7 @@ def test_load_config_merge_overrides():
             yaml.dump(
                 {
                     ConfigKeys.PRIORITY: 4,
-                    ConfigKeys.FORMAT: "json",
+                    ConfigKeys.FORMAT: OutputFormat.JSON.value,
                     ConfigKeys.CURSOR_FILE: "/tmp/cursor2",
                 },
                 f,
@@ -326,7 +334,7 @@ def test_load_config_merge_overrides():
 
             config = load_config()
             assert config.priority == 4
-            assert config.format == "json"
+            assert config.format == OutputFormat.JSON
             assert config.cursor_file == "/tmp/cursor2"
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
@@ -347,7 +355,7 @@ def test_load_config_merge_overrides_no_identifiers():
             yaml.dump(
                 {
                     ConfigKeys.PRIORITY: 4,
-                    ConfigKeys.FORMAT: "json",
+                    ConfigKeys.FORMAT: OutputFormat.JSON.value,
                     ConfigKeys.CURSOR_FILE: "/tmp/test",
                 },
                 f,
@@ -364,7 +372,7 @@ def test_load_config_merge_overrides_no_identifiers():
 
             config = load_config()
             assert config.priority == 4
-            assert config.format == "json"
+            assert config.format == OutputFormat.JSON
             assert config.cursor_file == "/tmp/test"
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
@@ -602,7 +610,9 @@ def test_load_config_default_yml_fallback():
         # Create only .yml file (no .yaml)
         main_config = tmpdir_path / "journalcheck.yml"
         with open(main_config, "w") as f:
-            yaml.dump({ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: "json"}, f)
+            yaml.dump(
+                {ConfigKeys.PRIORITY: 3, ConfigKeys.FORMAT: OutputFormat.JSON.value}, f
+            )
 
         from journalcheck import journalcheck
 
@@ -617,7 +627,7 @@ def test_load_config_default_yml_fallback():
             config = load_config()
             # Should load from .yml fallback
             assert config.priority == 3
-            assert config.format == "json"
+            assert config.format == OutputFormat.JSON
         finally:
             journalcheck.DEFAULT_CONFIG_FILE = original_default_file
             journalcheck.DEFAULT_CONFIG_DIR = original_default_dir

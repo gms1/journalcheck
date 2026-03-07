@@ -1,3 +1,4 @@
+from journalcheck.config import OutputFormat
 from journalcheck.journalcheck import parse_args
 
 
@@ -9,10 +10,10 @@ def test_parse_args_defaults():
 
 
 def test_parse_args_with_options():
-    args = parse_args(["-c", "test.yaml", "-p", "3", "-o", "json"])
+    args = parse_args(["-c", "test.yaml", "-p", "3", "-o", OutputFormat.JSON])
     assert args.config == "test.yaml"
     assert args.priority == 3
-    assert args.output == "json"
+    assert args.output == OutputFormat.JSON
 
 
 def test_parse_args_with_test_option():
