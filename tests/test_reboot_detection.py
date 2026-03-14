@@ -3,7 +3,7 @@ import yaml
 import io
 import sys
 from pathlib import Path
-from journalcheck.journalcheck import run, JournalFields
+from journalcheck.journalcheck import run, JournalFields, BOOT_MARKER
 from journalcheck.config import ConfigKeys, OutputFormat
 from systemd import journal
 
@@ -81,7 +81,7 @@ def test_reboot_marker_inserted_on_boot_id_change():
             output = captured_output.getvalue()
 
             # Should contain reboot marker
-            assert "-- Reboot --" in output
+            assert BOOT_MARKER in output
             # Should have all messages
             assert "First message" in output
             assert "Second message" in output
@@ -89,7 +89,7 @@ def test_reboot_marker_inserted_on_boot_id_change():
             # Reboot marker should be between second and third message
             lines = output.strip().split("\n")
             assert len(lines) == 4  # 3 messages + 1 reboot marker
-            assert "-- Reboot --" in lines[2]
+            assert BOOT_MARKER in lines[2]
         finally:
             sys.stdout = sys.__stdout__
 
@@ -128,7 +128,7 @@ def test_no_reboot_marker_for_json_format():
             output = captured_output.getvalue()
 
             # Should NOT contain reboot marker
-            assert "-- Reboot --" not in output
+            assert BOOT_MARKER not in output
             # Should have both messages
             assert "First message" in output
             assert "After reboot" in output
@@ -166,7 +166,7 @@ def test_no_reboot_marker_at_start():
             output = captured_output.getvalue()
 
             # Should NOT contain reboot marker
-            assert "-- Reboot --" not in output
+            assert BOOT_MARKER not in output
             # Should have the message
             assert "First message" in output
         finally:
@@ -216,7 +216,7 @@ def test_multiple_reboots():
             output = captured_output.getvalue()
 
             # Should contain two reboot markers
-            assert output.count("-- Reboot --") == 2
+            assert output.count(BOOT_MARKER) == 2
             # Should have all messages
             assert "Message 1" in output
             assert "Message 2" in output
@@ -268,7 +268,7 @@ def test_reboot_marker_tracks_all_entries():
             output = captured_output.getvalue()
 
             # Should contain reboot marker (boot ID changed even though entry was filtered)
-            assert "-- Reboot --" in output
+            assert BOOT_MARKER in output
             # Should have shown messages
             assert "Message 1" in output
             assert "Message 2" in output

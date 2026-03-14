@@ -8,4 +8,4 @@ if [ ! -f "tests/fixtures/journal_data/test.journal" -o "tests/fixtures/journal_
   ./scripts/generate-test-journal.sh
 fi
 
-pytest --cov=journalcheck --cov-report=term-missing --cov-report=xml
+pytest --cov=journalcheck --cov-report=term-missing --cov-report=xml "$@"

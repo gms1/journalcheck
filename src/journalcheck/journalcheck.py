@@ -46,6 +46,9 @@ class Severity:
     VIOLATION = "VIOLATION"
 
 
+BOOT_MARKER = "-- BOOT --"
+
+
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
     """Merge a loaded configuration into existing configuration data.
 
@@ -369,6 +372,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
         return
 
     cursor_file: Path | None = Path(config.cursor_file) if config.cursor_file else None
+    last_boot_id: str | None = None
 
     if cursor_file:
         if cursor_file.exists():
@@ -376,7 +380,9 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
                 cursor: str = f.read().strip()
                 if cursor:
                     reader.seek_cursor(cursor)
-                    reader.get_next()
+                    prev_entry = reader.get_next()
+                    if prev_entry:
+                        last_boot_id = prev_entry.get(JournalFields.BOOT_ID)
         else:
             # If cursor file is configured but doesn't exist, seek to last 24 hours
             since: datetime = datetime.now() - timedelta(days=1)
@@ -384,7 +390,6 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
 
     # Collect output
     output_lines: list[str] = []
-    last_boot_id: str | None = None
     entry: dict[str, Any] | None = None
     for entry in reader:
         show, severity = should_show_entry(entry, config)
@@ -393,7 +398,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
             if config.format == OutputFormat.SHORT:
                 this_boot_id = entry.get(JournalFields.BOOT_ID)
                 if last_boot_id and this_boot_id and this_boot_id != last_boot_id:
-                    output_lines.append("-- Reboot --")
+                    output_lines.append(BOOT_MARKER)
                 last_boot_id = this_boot_id
 
             output_lines.append(format_entry(entry, config.format, severity))
