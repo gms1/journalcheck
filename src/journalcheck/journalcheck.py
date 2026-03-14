@@ -344,6 +344,111 @@ def save_cursor(cursor_file: Path, entry: dict[str, Any]) -> None:
         raise OSError(f"Failed to write cursor file {cursor_file}: {e}") from e
 
 
+class JournalProcessor:
+    """Processes systemd journal entries according to configuration.
+
+    Manages reader positioning via cursor, filters entries, detects reboots,
+    and dispatches output via stdout, command, or email.
+    """
+
+    def __init__(
+        self,
+        reader: journal.Reader,
+        config: Config,
+        test_mode: bool = False,
+    ) -> None:
+        """Initialize the processor and position the reader.
+
+        Args:
+            reader: systemd journal reader instance
+            config: merged configuration
+            test_mode: if True, cursor file will not be updated
+        """
+        self.reader = reader
+        self.config = config
+        self.test_mode = test_mode
+        self.cursor_file: Path | None = (
+            Path(config.cursor_file) if config.cursor_file else None
+        )
+        self.last_boot_id: str | None = None
+        self.last_entry: dict[str, Any] | None = None
+        self._setup_cursor()
+
+    def _setup_cursor(self) -> None:
+        """Position the reader based on the cursor file."""
+        if not self.cursor_file:
+            return
+        if self.cursor_file.exists():
+            with open(self.cursor_file) as f:
+                cursor: str = f.read().strip()
+                if cursor:
+                    self.reader.seek_cursor(cursor)
+                    prev_entry = self.reader.get_next()
+                    if prev_entry:
+                        self.last_boot_id = prev_entry.get(JournalFields.BOOT_ID)
+        else:
+            # Cursor file configured but doesn't exist: seek to last 24 hours
+            since: datetime = datetime.now() - timedelta(days=1)
+            self.reader.seek_realtime(since)  # type: ignore[attr-defined]
+
+    def _collect_output(self) -> list[str]:
+        """Iterate journal entries and return formatted output lines."""
+        output_lines: list[str] = []
+        for entry in self.reader:
+            self.last_entry = entry
+            show, severity = should_show_entry(entry, self.config)
+            if show:
+                if self.config.format == OutputFormat.SHORT:
+                    this_boot_id = entry.get(JournalFields.BOOT_ID)
+                    if (
+                        self.last_boot_id
+                        and this_boot_id
+                        and this_boot_id != self.last_boot_id
+                    ):
+                        output_lines.append(BOOT_MARKER)
+                    self.last_boot_id = this_boot_id
+                output_lines.append(format_entry(entry, self.config.format, severity))
+        return output_lines
+
+    def _send_output(self, output_text: str) -> None:
+        """Dispatch output via stdout, command, and/or email."""
+        if not os.getenv(ENV_JOURNALCHECK_SERVICE):
+            print(output_text)
+
+        if self.config.output_command:
+            subprocess.run(
+                self.config.output_command,
+                shell=True,
+                input=output_text,
+                text=True,
+            )
+
+        if self.config.email_to:
+            subprocess.run(
+                [
+                    "mail",
+                    "-s",
+                    self.config.email_subject or DEFAULT_EMAIL_SUBJECT,
+                    self.config.email_to,
+                ],
+                input=output_text,
+                text=True,
+            )
+
+    def _save_cursor(self) -> None:
+        """Save cursor position if applicable."""
+        if self.cursor_file and not self.test_mode and self.last_entry:
+            save_cursor(self.cursor_file, self.last_entry)
+
+    def process(self) -> None:
+        """Run the full processing pipeline."""
+        output_lines = self._collect_output()
+        if not output_lines:
+            return
+        self._send_output("\n".join(output_lines))
+        self._save_cursor()
+
+
 def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
     """Main execution logic for processing journal entries.
 
@@ -371,65 +476,7 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
         print(yaml.dump(config.to_dict(), default_flow_style=False, sort_keys=False))
         return
 
-    cursor_file: Path | None = Path(config.cursor_file) if config.cursor_file else None
-    last_boot_id: str | None = None
-
-    if cursor_file:
-        if cursor_file.exists():
-            with open(cursor_file) as f:
-                cursor: str = f.read().strip()
-                if cursor:
-                    reader.seek_cursor(cursor)
-                    first_entry = reader.get_next()
-                    if first_entry:
-                        last_boot_id = first_entry.get(JournalFields.BOOT_ID)
-        else:
-            # If cursor file is configured but doesn't exist, seek to last 24 hours
-            since: datetime = datetime.now() - timedelta(days=1)
-            reader.seek_realtime(since)  # type: ignore[attr-defined]
-
-    # Collect output
-    output_lines: list[str] = []
-    entry: dict[str, Any] | None = None
-    for entry in reader:
-        show, severity = should_show_entry(entry, config)
-        if show:
-            # Check for reboot
-            if config.format == OutputFormat.SHORT:
-                this_boot_id = entry.get(JournalFields.BOOT_ID)
-                if last_boot_id and this_boot_id and this_boot_id != last_boot_id:
-                    output_lines.append(BOOT_MARKER)
-                last_boot_id = this_boot_id
-
-            output_lines.append(format_entry(entry, config.format, severity))
-
-    if not output_lines:
-        return
-
-    # Handle output
-    output_text = "\n".join(output_lines)
-
-    if not os.getenv(ENV_JOURNALCHECK_SERVICE):
-        print(output_text)
-
-    if config.output_command:
-        subprocess.run(config.output_command, shell=True, input=output_text, text=True)
-
-    if config.email_to:
-        subprocess.run(
-            [
-                "mail",
-                "-s",
-                config.email_subject if config.email_subject else DEFAULT_EMAIL_SUBJECT,
-                config.email_to,
-            ],
-            input=output_text,
-            text=True,
-        )
-
-    # Save cursor
-    if cursor_file and not parsed_args.test and entry:
-        save_cursor(cursor_file, entry)
+    JournalProcessor(reader, config, test_mode=parsed_args.test).process()
 
 
 def main() -> None:
