@@ -14,9 +14,13 @@ TEST_JOURNAL_DATA_DIR_PATH = Path("tests/fixtures/journal_data/")
 class MockReader:
     """Mock journal reader for testing reboot detection."""
 
-    def __init__(self, entries):
+    def __init__(self, entries, cursor_entry=None, empty_get_next=False):
         self.entries = entries
         self.index = 0
+        self.cursor_entry = (
+            cursor_entry  # entry returned by get_next() after seek_cursor
+        )
+        self.empty_get_next = empty_get_next  # simulate get_next returning empty dict
 
     def __iter__(self):
         return self
@@ -32,7 +36,9 @@ class MockReader:
         pass
 
     def get_next(self):
-        pass
+        if self.empty_get_next:
+            return {}
+        return self.cursor_entry or {}
 
     def seek_realtime(self, since):
         pass
@@ -273,5 +279,95 @@ def test_reboot_marker_tracks_all_entries():
             assert "Message 1" in output
             assert "Message 2" in output
             assert "Filtered message" not in output
+        finally:
+            sys.stdout = sys.__stdout__
+
+
+def test_boot_marker_after_cursor_with_boot_id_change():
+    """Test that boot marker is inserted when boot ID changes after cursor seek."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cursor_file = Path(tmpdir) / "cursor"
+        cursor_file.write_text("some-cursor")
+        config_file = Path(tmpdir) / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.PRIORITY: 6,
+                    ConfigKeys.FORMAT: OutputFormat.SHORT.value,
+                    "cursor_file": str(cursor_file),
+                },
+                f,
+            )
+
+        # cursor_entry is from previous boot, new entries are from a different boot
+        cursor_entry = {
+            JournalFields.BOOT_ID: "boot-id-1",
+            JournalFields.CURSOR: "some-cursor",
+        }
+        entries = [
+            {
+                JournalFields.BOOT_ID: "boot-id-2",
+                JournalFields.PRIORITY: 3,
+                JournalFields.MESSAGE: "First new entry",
+                JournalFields.SYSLOG_IDENTIFIER: "test",
+                JournalFields.HOSTNAME: "host",
+            },
+        ]
+
+        reader = MockReader(entries, cursor_entry=cursor_entry)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            run(reader, ["-c", str(config_file), "-t"])
+            output = captured_output.getvalue()
+
+            # Boot marker should appear before the first new entry
+            assert BOOT_MARKER in output
+            assert "First new entry" in output
+            lines = output.strip().split("\n")
+            assert lines[0] == BOOT_MARKER
+        finally:
+            sys.stdout = sys.__stdout__
+
+
+def test_no_boot_marker_when_get_next_returns_empty():
+    """Test that no boot marker is inserted when get_next returns empty dict."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        cursor_file = Path(tmpdir) / "cursor"
+        cursor_file.write_text("some-cursor")
+        config_file = Path(tmpdir) / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(
+                {
+                    ConfigKeys.PRIORITY: 6,
+                    ConfigKeys.FORMAT: OutputFormat.SHORT.value,
+                    "cursor_file": str(cursor_file),
+                },
+                f,
+            )
+
+        entries = [
+            {
+                JournalFields.BOOT_ID: "boot-id-2",
+                JournalFields.PRIORITY: 3,
+                JournalFields.MESSAGE: "First new entry",
+                JournalFields.SYSLOG_IDENTIFIER: "test",
+                JournalFields.HOSTNAME: "host",
+            },
+        ]
+
+        # get_next returns empty dict (cursor entry no longer exists, e.g. rotated)
+        reader = MockReader(entries, empty_get_next=True)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            run(reader, ["-c", str(config_file), "-t"])
+            output = captured_output.getvalue()
+
+            # No boot marker since we couldn't read previous boot ID
+            assert BOOT_MARKER not in output
+            assert "First new entry" in output
         finally:
             sys.stdout = sys.__stdout__

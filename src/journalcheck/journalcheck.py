@@ -380,9 +380,9 @@ def run(reader: journal.Reader, args: Optional[list[str]] = None) -> None:
                 cursor: str = f.read().strip()
                 if cursor:
                     reader.seek_cursor(cursor)
-                    prev_entry = reader.get_next()
-                    if prev_entry:
-                        last_boot_id = prev_entry.get(JournalFields.BOOT_ID)
+                    first_entry = reader.get_next()
+                    if first_entry:
+                        last_boot_id = first_entry.get(JournalFields.BOOT_ID)
         else:
             # If cursor file is configured but doesn't exist, seek to last 24 hours
             since: datetime = datetime.now() - timedelta(days=1)
