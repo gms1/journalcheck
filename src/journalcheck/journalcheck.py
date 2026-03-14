@@ -46,7 +46,12 @@ class Severity:
     VIOLATION = "VIOLATION"
 
 
-BOOT_MARKER = "-- BOOT --"
+BOOT_MARKER = "=== BOOT ==="
+REBOOT_MARKER = "=== REBOOT ==="
+SHUTDOWN_MARKER = "=== SHUTDOWN ==="
+
+_LOGIND_REBOOT_MSG = "The system will reboot now"
+_LOGIND_SHUTDOWN_MSG = "The system is going down for poweroff NOW"
 
 
 def _merge_configs(data: dict[str, Any], loaded: dict[str, Any]) -> dict[str, Any]:
@@ -372,6 +377,7 @@ class JournalProcessor:
         )
         self.last_boot_id: str | None = None
         self.last_entry: dict[str, Any] | None = None
+        self.marker: str | None = None
         self._setup_cursor()
 
     def _setup_cursor(self) -> None:
@@ -396,18 +402,34 @@ class JournalProcessor:
         output_lines: list[str] = []
         for entry in self.reader:
             self.last_entry = entry
+
+            # Check for planned reboot/shutdown from systemd-logind
+            if get_identifier(entry) == "systemd-logind":
+                message = entry.get(JournalFields.MESSAGE, "")
+                if _LOGIND_REBOOT_MSG in message:
+                    self.marker = REBOOT_MARKER
+                elif _LOGIND_SHUTDOWN_MSG in message:
+                    self.marker = SHUTDOWN_MARKER
+
+            # Check for boot ID change
+            this_boot_id = entry.get(JournalFields.BOOT_ID)
+            if self.last_boot_id and this_boot_id and this_boot_id != self.last_boot_id:
+                self.marker = BOOT_MARKER
+            self.last_boot_id = this_boot_id
+
             show, severity = should_show_entry(entry, self.config)
+
+            if (
+                self.marker
+                and (show or output_lines)
+                and self.config.format == OutputFormat.SHORT
+            ):
+                output_lines.append(self.marker)
+                self.marker = None
+
             if show:
-                if self.config.format == OutputFormat.SHORT:
-                    this_boot_id = entry.get(JournalFields.BOOT_ID)
-                    if (
-                        self.last_boot_id
-                        and this_boot_id
-                        and this_boot_id != self.last_boot_id
-                    ):
-                        output_lines.append(BOOT_MARKER)
-                    self.last_boot_id = this_boot_id
                 output_lines.append(format_entry(entry, self.config.format, severity))
+
         return output_lines
 
     def _send_output(self, output_text: str) -> None:

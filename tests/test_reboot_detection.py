@@ -371,3 +371,125 @@ def test_no_boot_marker_when_get_next_returns_empty():
             assert "First new entry" in output
         finally:
             sys.stdout = sys.__stdout__
+
+
+def test_reboot_marker_from_logind():
+    """Test that REBOOT marker is inserted when systemd-logind signals reboot."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = Path(tmpdir) / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
+            )
+
+        entries = [
+            {
+                JournalFields.BOOT_ID: "boot-id-1",
+                JournalFields.PRIORITY: 3,
+                JournalFields.MESSAGE: "Normal message",
+                JournalFields.SYSLOG_IDENTIFIER: "test",
+                JournalFields.HOSTNAME: "host",
+            },
+            {
+                JournalFields.BOOT_ID: "boot-id-1",
+                JournalFields.PRIORITY: 5,
+                JournalFields.MESSAGE: "The system will reboot now",
+                JournalFields.SYSLOG_IDENTIFIER: "systemd-logind",
+                JournalFields.HOSTNAME: "host",
+            },
+        ]
+
+        reader = MockReader(entries)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            run(reader, ["-c", str(config_file)])
+            output = captured_output.getvalue()
+
+            from journalcheck.journalcheck import REBOOT_MARKER
+
+            assert REBOOT_MARKER in output
+            assert "Normal message" in output
+            lines = output.strip().split("\n")
+            # REBOOT marker should appear before or with the logind message
+            reboot_idx = next(i for i, l in enumerate(lines) if REBOOT_MARKER in l)
+            assert reboot_idx > 0
+        finally:
+            sys.stdout = sys.__stdout__
+
+
+def test_shutdown_marker_from_logind():
+    """Test that SHUTDOWN marker is inserted when systemd-logind signals poweroff."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = Path(tmpdir) / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
+            )
+
+        entries = [
+            {
+                JournalFields.BOOT_ID: "boot-id-1",
+                JournalFields.PRIORITY: 3,
+                JournalFields.MESSAGE: "Normal message",
+                JournalFields.SYSLOG_IDENTIFIER: "test",
+                JournalFields.HOSTNAME: "host",
+            },
+            {
+                JournalFields.BOOT_ID: "boot-id-1",
+                JournalFields.PRIORITY: 5,
+                JournalFields.MESSAGE: "The system is going down for poweroff NOW",
+                JournalFields.SYSLOG_IDENTIFIER: "systemd-logind",
+                JournalFields.HOSTNAME: "host",
+            },
+        ]
+
+        reader = MockReader(entries)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            run(reader, ["-c", str(config_file)])
+            output = captured_output.getvalue()
+
+            from journalcheck.journalcheck import SHUTDOWN_MARKER
+
+            assert SHUTDOWN_MARKER in output
+            assert "Normal message" in output
+        finally:
+            sys.stdout = sys.__stdout__
+
+
+def test_no_reboot_marker_from_other_identifier():
+    """Test that reboot message from non-logind identifier does not insert marker."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        config_file = Path(tmpdir) / "config.yaml"
+        with open(config_file, "w") as f:
+            yaml.dump(
+                {ConfigKeys.PRIORITY: 6, ConfigKeys.FORMAT: OutputFormat.SHORT.value}, f
+            )
+
+        entries = [
+            {
+                JournalFields.BOOT_ID: "boot-id-1",
+                JournalFields.PRIORITY: 3,
+                JournalFields.MESSAGE: "The system will reboot now",
+                JournalFields.SYSLOG_IDENTIFIER: "some-other-service",
+                JournalFields.HOSTNAME: "host",
+            },
+        ]
+
+        reader = MockReader(entries)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
+
+        try:
+            run(reader, ["-c", str(config_file)])
+            output = captured_output.getvalue()
+
+            from journalcheck.journalcheck import REBOOT_MARKER
+
+            assert REBOOT_MARKER not in output
+        finally:
+            sys.stdout = sys.__stdout__
