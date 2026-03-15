@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.4] - 2026-03-15
+
 - reboot/shutdown detection
 - refactoring
 
@@ -63,7 +65,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Test suite with 95% coverage
 
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.3...HEAD
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.4...HEAD
+[1.0.4]: https://github.com/gms1/journalcheck/releases/tag/v1.0.4
 [1.0.3]: https://github.com/gms1/journalcheck/releases/tag/v1.0.3
 [1.0.2]: https://github.com/gms1/journalcheck/releases/tag/v1.0.2
 [1.0.1]: https://github.com/gms1/journalcheck/releases/tag/v1.0.1

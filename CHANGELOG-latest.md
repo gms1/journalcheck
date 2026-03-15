@@ -1,4 +1,5 @@
-## [1.0.3] - 2026-03-14
+## [1.0.4] - 2026-03-15
 
-- improved boot detection
+- reboot/shutdown detection
+- refactoring
 
