@@ -162,3 +162,35 @@ Description: Systemd journal monitoring and notification tool
  Inspired by logcheck but designed for systemd's journal with modern features
  like JSON output and flexible notification options.
 
+Package: journalcheck
+Architecture: all
+Version: 1.0.4-1
+Priority: optional
+Section: admin
+Maintainer: Guenter Sandner <www.gms@gmx.at>
+Installed-Size: 73
+Depends: python3-systemd, python3-yaml, python3:any
+Enhances: system-log-daemon, systemd
+Filename: ./journalcheck_1.0.4-1_all.deb
+Size: 14228
+MD5sum: 3cc81470ae56f7ec697f44c849360437
+SHA1: 8893a4184bb9acc5d68f3fe87973f6aa361f98dd
+SHA256: 3d3738e93722b01a6349c29716bd4fc682978bc90e02684e7319689f46fe20c1
+SHA512: d6782919706fc20c45f33f6567e94cf8d2865c79b85af173ba2939699d3d286eaca013c683dfbb4816a9e51290b62f3344b8d7a57a890a8d4dffe6f849558cf4
+Description: Systemd journal monitoring and notification tool
+ A tool for auditing systemd journal entries with configurable priority
+ filtering, pattern matching, and security violation detection.
+ .
+ Key features:
+  * Priority-based filtering (emerg, alert, crit, err, warning, notice, info, debug)
+  * Per-service priority configuration
+  * Regex pattern matching for violations and ignore rules
+  * Pre-configured security patterns for common services (sshd, sudo, su, smartd)
+  * Cursor-based tracking (only process new entries)
+  * Multiple output formats (short, json)
+  * Flexible notification via email, commands, or stdout
+  * Systemd timer integration for automated monitoring
+ .
+ Inspired by logcheck but designed for systemd's journal with modern features
+ like JSON output and flexible notification options.
+
