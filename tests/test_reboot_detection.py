@@ -7,7 +7,6 @@ from journalcheck.journalcheck import run, JournalFields, BOOT_MARKER
 from journalcheck.config import ConfigKeys, OutputFormat
 from systemd import journal
 
-
 TEST_JOURNAL_DATA_DIR_PATH = Path("tests/fixtures/journal_data/")
 
 

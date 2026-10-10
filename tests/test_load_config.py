@@ -107,13 +107,11 @@ def test_load_config_identifier_int_normalization():
 
 def test_load_config_raises_yaml_parse_error():
     with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
-        f.write(
-            """
+        f.write("""
                   priority:6
                   nokey
                   format: short
-                """
-        )
+                """)
         config_file = f.name
 
     try:
@@ -271,11 +269,7 @@ def test_load_config_merge_no_identifiers_in_main():
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
             yaml.dump(
-                {
-                    ConfigKeys.IDENTIFIERS: {
-                        "ssh": {IdentifierConfigKeys.PRIORITY: 4}
-                    }
-                },
+                {ConfigKeys.IDENTIFIERS: {"ssh": {IdentifierConfigKeys.PRIORITY: 4}}},
                 f,
             )
 
@@ -463,11 +457,7 @@ def test_load_config_merge_priority_override():
         main_config = Path(tmpdir) / "main.yaml"
         with open(main_config, "w") as f:
             yaml.dump(
-                {
-                    ConfigKeys.IDENTIFIERS: {
-                        "ssh": {IdentifierConfigKeys.PRIORITY: 4}
-                    }
-                },
+                {ConfigKeys.IDENTIFIERS: {"ssh": {IdentifierConfigKeys.PRIORITY: 4}}},
                 f,
             )
 
@@ -477,11 +467,7 @@ def test_load_config_merge_priority_override():
         additional_config = config_dir / "01-additional.yaml"
         with open(additional_config, "w") as f:
             yaml.dump(
-                {
-                    ConfigKeys.IDENTIFIERS: {
-                        "ssh": {IdentifierConfigKeys.PRIORITY: 6}
-                    }
-                },
+                {ConfigKeys.IDENTIFIERS: {"ssh": {IdentifierConfigKeys.PRIORITY: 6}}},
                 f,
             )
 

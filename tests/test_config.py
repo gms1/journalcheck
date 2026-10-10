@@ -49,6 +49,7 @@ def test_config_invalid_priority():
     with pytest.raises(ValueError, match="Priority must be 0-7"):
         Config(priority=8)
 
+
 def test_config_invalid_identifier_priority():
     with pytest.raises(ValueError, match="Priority must be 0-7"):
         Config(identifiers={"test": IdentifierConfig(priority=10)})
@@ -148,7 +149,9 @@ def test_config_to_dict():
     assert result[ConfigKeys.OUTPUT_COMMAND] == "echo test"
     assert result[ConfigKeys.EMAIL_TO] == "admin@example.com"
     assert result[ConfigKeys.EMAIL_SUBJECT] == "Test Alert"
-    assert result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.PRIORITY] == "info"
+    assert (
+        result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.PRIORITY] == "info"
+    )
     assert result[ConfigKeys.IDENTIFIERS]["ssh"][IdentifierConfigKeys.VIOLATIONS] == [
         "Failed"
     ]
