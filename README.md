@@ -28,7 +28,7 @@ Inspired by [logcheck](https://packages.debian.org/stable/logcheck), but designe
 - Two-level pattern hierarchy:
   - **Violations**: Always shown (e.g., failed logins, security events)
   - **Ignore**: Suppress matching messages (exact match)
-- Pre-configured violation patterns for common services (sshd, sudo, su, smartd)
+- Pre-configured violation patterns for common services (kernel, sshd, sudo, su, smartd)
 - Cursor-based tracking (only process new entries)
 - Multiple output formats (short, json)
 - Modular configuration via `/etc/journalcheck.yaml` and `/etc/journalcheck.d/*.yaml`
@@ -120,13 +120,14 @@ identifiers:
 
 The following identifiers have pre-configured violation patterns that are automatically included:
 
-- **sshd**: Failed password, Invalid user, Connection closed by authenticating user, etc.
-- **sudo**: authentication failure, user NOT in sudoers, incorrect password attempt
-- **su**: FAILED su, authentication failure
-- **smartd**: SMART Failure, Attribute.*failed, Error.*occurred
-- **kernel**: I/O error, Buffer I/O error, end_request: I/O error
+- **kernel**: I/O error, Out of memory, Killed process
+- **sshd**: Invalid user, Failed password, Connection closed by authenticating user
+- **sudo**: authentication failure, incorrect password attempt, unknown user, user NOT in sudoers
+- **su**: FAILED SU, authentication failed
+- **smartd**: SMART Failure, reached.*limit, Currently unreadable.*sectors, Offline uncorrectable sectors
 
 You can add additional violations to these identifiers - they will be appended to the defaults.
+
 ## Usage
 
 ### Basic usage

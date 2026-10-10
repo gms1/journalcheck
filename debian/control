@@ -17,7 +17,7 @@ Description: Systemd journal monitoring and notification tool
   * Priority-based filtering (emerg, alert, crit, err, warning, notice, info, debug)
   * Per-service priority configuration
   * Regex pattern matching for violations and ignore rules
-  * Pre-configured security patterns for common services (sshd, sudo, su, smartd)
+  * Pre-configured security patterns for common services (kernel, sshd, sudo, su, smartd)
   * Cursor-based tracking (only process new entries)
   * Multiple output formats (short, json)
   * Flexible notification via email, commands, or stdout
