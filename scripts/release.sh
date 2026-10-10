@@ -1,9 +1,7 @@
 #!/bin/bash
 DN=$(dirname -- "${BASH_SOURCE[0]}"})
-set -e
 cd "${DN}/.."
 
-#!/bin/bash
 set -e
 
 NEW_VERSION_TAG="${1}"

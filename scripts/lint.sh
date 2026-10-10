@@ -4,6 +4,6 @@ set -e
 cd "${DN}/.."
 
 
-black src
+black src/ tests/
 flake8 src
 mypy src
