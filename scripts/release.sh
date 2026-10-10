@@ -1,8 +1,7 @@
 #!/bin/bash
-DN=$(dirname -- "${BASH_SOURCE[0]}"})
-cd "${DN}/.."
-
+DN=$(dirname -- "${BASH_SOURCE[0]}")
 set -e
+cd "${DN}/.."
 
 NEW_VERSION_TAG="${1}"
 NEW_VERSION="${NEW_VERSION_TAG#v}"
