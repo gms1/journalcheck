@@ -32,6 +32,17 @@ cp -a "${WORKSPACE_ROOT}/src" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/debian" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/systemd" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/pyproject.toml" "${PKG_DIR}/"
+
+# Downgrade PEP 639 license metadata in the staged copy: the system
+# setuptools shipped with Debian/Ubuntu (< 77) does not support SPDX
+# license expressions and rejects the pyproject.toml during pybuild
+# (which builds without isolation using the system setuptools)
+sed -i \
+  -e 's|^requires = \["setuptools>=77.0"\]$|requires = ["setuptools>=61.0"]|' \
+  -e 's|^license = "MIT"$|license = {text = "MIT"}|' \
+  -e '/^license-files = /d' \
+  "${PKG_DIR}/pyproject.toml"
+
 cp -a "${WORKSPACE_ROOT}/README.md" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/LICENSE" "${PKG_DIR}/"
 cp -a "${WORKSPACE_ROOT}/config.yaml.sample" "${PKG_DIR}/"
