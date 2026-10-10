@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.5] - 2026-10-10
+
 - fixed default violations documentation in README
 - modernized packaging metadata (PEP 639 license)
 - adapted Debian build to system setuptools (< 77), which lacks PEP 639 support
@@ -69,7 +71,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - CI/CD with GitHub Actions
 - Test suite with 95% coverage
 
-[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.4...HEAD
+[Unreleased]: https://github.com/gms1/journalcheck/compare/v1.0.5...HEAD
+[1.0.5]: https://github.com/gms1/journalcheck/releases/tag/v1.0.5
 [1.0.4]: https://github.com/gms1/journalcheck/releases/tag/v1.0.4
 [1.0.3]: https://github.com/gms1/journalcheck/releases/tag/v1.0.3
 [1.0.2]: https://github.com/gms1/journalcheck/releases/tag/v1.0.2
